@@ -53,7 +53,7 @@ func (s *Server) RegisterAgent(agent types.Agent) {
 	s.setAgentProxy(agentproxy)
 	s.agentimages[agentproxy.GetProxyUUID()] = agentimage
 
-	s.Log(EventLog{"Register agent " + agentimage})
+	//s.Log(EventLog{"Register agent " + agentimage})
 }
 
 func (s *Server) startAgentContainers() error {
@@ -88,15 +88,20 @@ func (s *Server) startAgentContainers() error {
 
 			select {
 			case msg := <-wait:
-				berror := bettererrors.
-					New("Agent terminated").
-					SetContext("code", strconv.FormatInt(msg.StatusCode, 10))
 
-				if msg.Error != nil {
-					berror.SetContext("error", msg.Error.Message)
+				if !s.gameOver {
+					berror := bettererrors.
+						New("Agent terminated").
+						SetContext("code", strconv.FormatInt(msg.StatusCode, 10))
+
+					if msg.Error != nil {
+						berror.SetContext("error", msg.Error.Message)
+					}
+
+					s.Log(EventWarn{berror})
+				} else {
+					s.Log(EventHeadsUp{"Agent " + container.ImageName + " has stopped."})
 				}
-
-				s.Log(EventWarn{berror})
 
 				s.containerorchestrator.RemoveContainer(container)
 
@@ -125,11 +130,10 @@ func (s *Server) startAgentContainers() error {
 			}
 		}()
 
-		s.AddTearDownCall(func() error {
-			s.containerorchestrator.TearDown(container)
-
-			return nil
-		})
+		// s.AddTearDownCall(func() error {
+		// 	s.containerorchestrator.TearDown(container)
+		// 	return nil
+		// })
 	}
 
 	return nil

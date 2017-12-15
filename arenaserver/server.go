@@ -66,8 +66,9 @@ type Server struct {
 
 	game          commongame.GameInterface
 	gameIsRunning bool
-	gameDuration  time.Duration
+	gameDuration  *time.Duration
 	gameStartTime *time.Time
+	gameOver      bool
 
 	events chan interface{}
 }
@@ -79,7 +80,7 @@ func NewServer(
 	game commongame.GameInterface,
 	arenaServerUUID string,
 	mqClient mq.ClientInterface,
-	gameDuration time.Duration,
+	gameDuration *time.Duration,
 ) *Server {
 
 	gamehost := host
@@ -133,6 +134,7 @@ func NewServer(
 		gameIsRunning: false,
 		gameDuration:  gameDuration,
 		gameStartTime: nil,
+		gameOver:      false,
 
 		events: make(chan interface{}, LOG_ENTRY_BUFFER),
 	}
@@ -150,10 +152,7 @@ func (s Server) getNbExpectedagents() int {
 
 func (server *Server) Start() (chan interface{}, error) {
 
-	server.Log(EventLog{"Listen"})
 	block := server.listen()
-
-	server.Log(EventLog{"Starting agent containers"})
 	err := server.startAgentContainers()
 
 	if err != nil {
@@ -161,7 +160,7 @@ func (server *Server) Start() (chan interface{}, error) {
 	}
 
 	server.AddTearDownCall(func() error {
-		server.Log(EventLog{"Publish game state (" + server.arenaServerUUID + "stopped)"})
+		//server.Log(EventLog{"Publish game state (" + server.arenaServerUUID + "stopped)"})
 
 		game := server.GetGameDescription()
 
@@ -239,34 +238,38 @@ func (server *Server) startTicking() {
 	server.AddTearDownCall(func() error {
 		server.stopticking <- true
 		close(server.stopticking)
-
 		return nil
 	})
 
 	go func() {
-
 		for {
-			select {
-			case <-time.After(server.gameDuration):
-				{
-					{
-						server.Log(EventLog{"Game ended after " + server.gameDuration.String()})
-						notify.Post("app:stopticking", true) // gameover: true
-						break
-					}
-				}
-			case <-server.stopticking:
-				{
-					server.Log(EventLog{"Received stop ticking signal"})
-					notify.Post("app:stopticking", false) // gameover: false
-					break
-				}
-			case <-ticker:
-				{
-					server.doTick()
-				}
+			<-ticker
+
+			if server.gameOver {
+				return
 			}
+
+			server.doTick()
 		}
+	}()
+
+	if server.gameDuration != nil {
+		server.Log(EventHeadsUp{"Game will run for " + server.gameDuration.String()})
+		go func() {
+			<-time.After(*server.gameDuration)
+			server.gameOver = true
+			server.Log(EventHeadsUp{"Game ended after " + server.gameDuration.String()})
+			notify.Post("app:stopticking", true) // gameover: true
+		}()
+	} else {
+		server.Log(EventHeadsUp{"Game will run indefinitely"})
+	}
+
+	go func() {
+		<-server.stopticking
+		server.gameOver = true
+		server.Log(EventLog{"Received stop ticking signal"})
+		notify.Post("app:stopticking", false) // gameover: false
 	}()
 }
 
@@ -401,23 +404,22 @@ func (server *Server) closeAllAgentConnections() {
 func (server *Server) TearDown() {
 	server.events <- EventDebug{"teardown"}
 
-	// Properly terminate all agents
-	server.closeAllAgentConnections()
-
-	// Less properly terminate all agents
-	server.containerorchestrator.TearDownAll()
-
 	server.tearDownCallbacksMutex.Lock()
 
 	for i := len(server.tearDownCallbacks) - 1; i >= 0; i-- {
-		server.events <- EventLog{"Executing TearDownCallback"}
+		//server.events <- EventLog{"Executing TearDownCallback"}
 		server.tearDownCallbacks[i]()
 	}
 
 	// Reset to avoid calling teardown callback multiple times
 	server.tearDownCallbacks = make([]types.TearDownCallback, 0)
-
 	server.tearDownCallbacksMutex.Unlock()
+
+	// Close communication with agents
+	server.closeAllAgentConnections()
+
+	// Stop running container
+	server.containerorchestrator.TearDownAll()
 
 	server.events <- EventClose{}
 }
