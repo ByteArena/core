@@ -38,38 +38,49 @@ type Server struct {
 
 	stopticking  chan bool
 	nbhandshaked int
-	currentturn  uint32
+
+	currentturn uint32
 
 	tearDownCallbacks      []types.TearDownCallback
 	tearDownCallbacksMutex *sync.Mutex
 
 	containerorchestrator arenaservertypes.ContainerOrchestrator
+	commserver            *comm.CommServer
+	mqClient              mq.ClientInterface
 
-	commserver *comm.CommServer
-	mqClient   mq.ClientInterface
+	gameDescription types.GameDescriptionInterface
 
-	agentimages            map[uuid.UUID]string
 	agentproxies           map[uuid.UUID]agent.AgentProxyInterface
 	agentproxiesmutex      *sync.Mutex
 	agentproxieshandshakes map[uuid.UUID]struct{}
+	agentimages            map[uuid.UUID]string
 
 	pendingmutations []arenaservertypes.AgentMutationBatch
 	mutationsmutex   *sync.Mutex
 
-	gameDescription types.GameDescriptionInterface
-
 	tickdurations []int64
 
+	///////////////////////////////////////////////////////////////////////
 	// Game logic
+	///////////////////////////////////////////////////////////////////////
 
-	game commongame.GameInterface
+	game          commongame.GameInterface
+	gameIsRunning bool
+	gameDuration  time.Duration
+	gameStartTime *time.Time
 
 	events chan interface{}
-
-	gameIsRunning bool
 }
 
-func NewServer(host string, orch arenaservertypes.ContainerOrchestrator, gameDescription types.GameDescriptionInterface, game commongame.GameInterface, arenaServerUUID string, mqClient mq.ClientInterface) *Server {
+func NewServer(
+	host string,
+	orch arenaservertypes.ContainerOrchestrator,
+	gameDescription types.GameDescriptionInterface,
+	game commongame.GameInterface,
+	arenaServerUUID string,
+	mqClient mq.ClientInterface,
+	gameDuration time.Duration,
+) *Server {
 
 	gamehost := host
 
@@ -120,6 +131,8 @@ func NewServer(host string, orch arenaservertypes.ContainerOrchestrator, gameDes
 
 		game:          game,
 		gameIsRunning: false,
+		gameDuration:  gameDuration,
+		gameStartTime: nil,
 
 		events: make(chan interface{}, LOG_ENTRY_BUFFER),
 	}
@@ -139,8 +152,6 @@ func (server *Server) Start() (chan interface{}, error) {
 
 	server.Log(EventLog{"Listen"})
 	block := server.listen()
-
-	server.gameIsRunning = true
 
 	server.Log(EventLog{"Starting agent containers"})
 	err := server.startAgentContainers()
@@ -218,6 +229,10 @@ func (server *Server) onAgentsReady() {
 
 func (server *Server) startTicking() {
 
+	server.gameIsRunning = true
+	now := time.Now()
+	server.gameStartTime = &now
+
 	tickduration := time.Duration((1000000 / time.Duration(server.tickspersec)) * time.Microsecond)
 	ticker := time.Tick(tickduration)
 
@@ -232,10 +247,18 @@ func (server *Server) startTicking() {
 
 		for {
 			select {
+			case <-time.After(server.gameDuration):
+				{
+					{
+						server.Log(EventLog{"Game ended after " + server.gameDuration.String()})
+						notify.Post("app:stopticking", true) // gameover: true
+						break
+					}
+				}
 			case <-server.stopticking:
 				{
 					server.Log(EventLog{"Received stop ticking signal"})
-					notify.Post("app:stopticking", nil)
+					notify.Post("app:stopticking", false) // gameover: false
 					break
 				}
 			case <-ticker:
