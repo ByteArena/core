@@ -6,7 +6,7 @@ import (
 
 	"github.com/bytearena/ecs"
 
-	"github.com/bytearena/core/arenaserver/types"
+	"github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/utils"
 	"github.com/bytearena/core/common/utils/vector"
 )

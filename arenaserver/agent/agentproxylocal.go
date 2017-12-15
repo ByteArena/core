@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"github.com/bytearena/core/arenaserver/types"
+	"github.com/bytearena/core/common/types"
 )
 
 type AgentProxyLocalInterface interface {

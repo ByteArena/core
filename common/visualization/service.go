@@ -20,13 +20,12 @@ type FetchArenasCbk func() ([]*types.VizGame, error)
 type EventLog struct{ Value string }
 
 type VizService struct {
-	addr          string
-	webclientpath string
-	mapkey        string
-	fetchGames    FetchArenasCbk
-	listener      *http.Server
-	recordStore   recording.RecordStoreInterface
-	mappack       *mappack.MappackInMemoryArchive
+	addr        string
+	mapkey      string
+	fetchGames  FetchArenasCbk
+	listener    *http.Server
+	recordStore recording.RecordStoreInterface
+	mappack     *mappack.MappackInMemoryArchive
 
 	events chan interface{}
 }
@@ -35,14 +34,13 @@ const (
 	LOG_ENTRY_BUFFER = 100
 )
 
-func NewVizService(addr string, webclientpath string, mapkey string, fetchArenas FetchArenasCbk, recordStore recording.RecordStoreInterface, mappack *mappack.MappackInMemoryArchive) *VizService {
+func NewVizService(addr string, mapkey string, fetchArenas FetchArenasCbk, recordStore recording.RecordStoreInterface, mappack *mappack.MappackInMemoryArchive) *VizService {
 	return &VizService{
-		addr:          addr,
-		webclientpath: webclientpath,
-		mapkey:        mapkey,
-		fetchGames:    fetchArenas,
-		recordStore:   recordStore,
-		mappack:       mappack,
+		addr:        addr,
+		mapkey:      mapkey,
+		fetchGames:  fetchArenas,
+		recordStore: recordStore,
+		mappack:     mappack,
 
 		events: make(chan interface{}, LOG_ENTRY_BUFFER),
 	}
@@ -72,15 +70,15 @@ func (viz *VizService) Start() chan struct{} {
 		http.HandlerFunc(apphandler.Home(viz.fetchGames)),
 	)).Methods("GET")
 
-	router.Handle("/record/{recordId:[a-zA-Z0-9\\-]+}", handlers.CombinedLoggingHandler(
-		logger,
-		http.HandlerFunc(apphandler.Replay(viz.recordStore, viz.webclientpath)),
-	)).Methods("GET")
+	// router.Handle("/record/{recordId:[a-zA-Z0-9\\-]+}", handlers.CombinedLoggingHandler(
+	// 	logger,
+	// 	http.HandlerFunc(apphandler.Replay(viz.recordStore, viz.webclientpath)),
+	// )).Methods("GET")
 
-	router.Handle("/record/{recordId:[a-zA-Z0-9\\-]+}/ws", handlers.CombinedLoggingHandler(
-		logger,
-		http.HandlerFunc(apphandler.ReplayWebsocket(viz.recordStore, viz.webclientpath)),
-	)).Methods("GET")
+	// router.Handle("/record/{recordId:[a-zA-Z0-9\\-]+}/ws", handlers.CombinedLoggingHandler(
+	// 	logger,
+	// 	http.HandlerFunc(apphandler.ReplayWebsocket(viz.recordStore, viz.webclientpath)),
+	// )).Methods("GET")
 
 	router.Handle("/arena/{id:[a-zA-Z0-9\\-]+}", handlers.CombinedLoggingHandler(
 		logger,

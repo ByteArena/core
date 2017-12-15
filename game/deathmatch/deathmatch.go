@@ -7,7 +7,7 @@ import (
 	"github.com/bytearena/box2d"
 	"github.com/bytearena/ecs"
 
-	"github.com/bytearena/core/arenaserver/types"
+	"github.com/bytearena/core/common/types"
 	commontypes "github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/utils/vector"
 	"github.com/bytearena/core/game/common"
@@ -448,8 +448,8 @@ func (deathmatch *DeathmatchGame) GetVizFrameJson() []byte {
 			playerAspect := entityResultPlayer.Components[deathmatch.playerComponent].(*Player)
 
 			obj.PlayerInfo = &commontypes.PlayerInfo{
-				PlayerName: playerAspect.Contestant.AgentName,
-				PlayerId:   playerAspect.Contestant.Id,
+				PlayerName: playerAspect.Agent.Manifest.Name,
+				PlayerId:   playerAspect.Agent.Manifest.Id,
 				Score:      commontypes.VizMessagePlayerScore{playerAspect.Score},
 				IsAlive:    true,
 			}

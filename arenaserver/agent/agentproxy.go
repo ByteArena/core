@@ -3,9 +3,8 @@ package agent
 import (
 	uuid "github.com/satori/go.uuid"
 
+	"github.com/bytearena/core/common/types"
 	"github.com/bytearena/ecs"
-
-	"github.com/bytearena/core/arenaserver/types"
 )
 
 type AgentProxyInterface interface {

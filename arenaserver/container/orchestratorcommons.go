@@ -8,13 +8,13 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/pkg/term"
 
-	"github.com/docker/docker/api/types"
+	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/pkg/jsonmessage"
 	uuid "github.com/satori/go.uuid"
 	bettererrors "github.com/xtuc/better-errors"
 
-	arenaservertypes "github.com/bytearena/core/arenaserver/types"
+	"github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/utils"
 )
 
@@ -30,7 +30,7 @@ func normalizeDockerRef(dockerimage string) (string, error) {
 	return parsedRefWithTag.String(), nil
 }
 
-func CommonCreateAgentContainer(orch arenaservertypes.ContainerOrchestrator, agentid uuid.UUID, host string, port int, dockerimage string) (*arenaservertypes.AgentContainer, error) {
+func CommonCreateAgentContainer(orch types.ContainerOrchestrator, agentid uuid.UUID, host string, port int, dockerimage string) (*types.AgentContainer, error) {
 	containerUnixUser := utils.GetenvOrDefault("CONTAINER_UNIX_USER", "root")
 
 	normalizedDockerimage, err := normalizeDockerRef(dockerimage)
@@ -39,7 +39,7 @@ func CommonCreateAgentContainer(orch arenaservertypes.ContainerOrchestrator, age
 		return nil, bettererrors.NewFromErr(err)
 	}
 
-	localimages, _ := orch.GetCli().ImageList(orch.GetContext(), types.ImageListOptions{})
+	localimages, _ := orch.GetCli().ImageList(orch.GetContext(), dockertypes.ImageListOptions{})
 	foundlocal := false
 	for _, localimage := range localimages {
 		for _, alias := range localimage.RepoTags {
@@ -60,7 +60,7 @@ func CommonCreateAgentContainer(orch arenaservertypes.ContainerOrchestrator, age
 		reader, err := orch.GetCli().ImagePull(
 			orch.GetContext(),
 			dockerimage,
-			types.ImagePullOptions{
+			dockertypes.ImagePullOptions{
 				RegistryAuth: orch.GetRegistryAuth(),
 			},
 		)
@@ -118,7 +118,7 @@ func CommonCreateAgentContainer(orch arenaservertypes.ContainerOrchestrator, age
 		return nil, bettererrors.New("Failed to create docker container for agent " + agentid.String() + "; " + err.Error())
 	}
 
-	agentcontainer := arenaservertypes.NewAgentContainer(agentid, resp.ID, normalizedDockerimage)
+	agentcontainer := types.NewAgentContainer(agentid, resp.ID, normalizedDockerimage)
 	orch.AddContainer(agentcontainer)
 
 	return agentcontainer, nil

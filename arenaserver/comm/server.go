@@ -7,8 +7,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/bytearena/core/arenaserver/types"
 	"github.com/bytearena/core/common/assert"
+	"github.com/bytearena/core/common/types"
 	uuid "github.com/satori/go.uuid"
 
 	bettererrors "github.com/xtuc/better-errors"
