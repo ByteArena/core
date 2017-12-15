@@ -16,7 +16,6 @@ import (
 
 	bettererrors "github.com/xtuc/better-errors"
 
-	arenaservertypes "github.com/bytearena/core/arenaserver/types"
 	"github.com/bytearena/core/common/mq"
 	"github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/types/mapcontainer"
@@ -44,7 +43,7 @@ type Server struct {
 	tearDownCallbacks      []types.TearDownCallback
 	tearDownCallbacksMutex *sync.Mutex
 
-	containerorchestrator arenaservertypes.ContainerOrchestrator
+	containerorchestrator types.ContainerOrchestrator
 	commserver            *comm.CommServer
 	mqClient              mq.ClientInterface
 
@@ -55,7 +54,7 @@ type Server struct {
 	agentproxieshandshakes map[uuid.UUID]struct{}
 	agentimages            map[uuid.UUID]string
 
-	pendingmutations []arenaservertypes.AgentMutationBatch
+	pendingmutations []types.AgentMutationBatch
 	mutationsmutex   *sync.Mutex
 
 	tickdurations []int64
@@ -75,7 +74,7 @@ type Server struct {
 
 func NewServer(
 	host string,
-	orch arenaservertypes.ContainerOrchestrator,
+	orch types.ContainerOrchestrator,
 	gameDescription types.GameDescriptionInterface,
 	game commongame.GameInterface,
 	arenaServerUUID string,
@@ -121,7 +120,7 @@ func NewServer(
 		agentproxieshandshakes: make(map[uuid.UUID]struct{}),
 		agentimages:            make(map[uuid.UUID]string),
 
-		pendingmutations: make([]arenaservertypes.AgentMutationBatch, 0),
+		pendingmutations: make([]types.AgentMutationBatch, 0),
 		mutationsmutex:   &sync.Mutex{},
 
 		tickdurations: make([]int64, 0),
@@ -273,10 +272,10 @@ func (server *Server) startTicking() {
 	}()
 }
 
-func (server *Server) popMutationBatches() []arenaservertypes.AgentMutationBatch {
+func (server *Server) popMutationBatches() []types.AgentMutationBatch {
 	server.mutationsmutex.Lock()
 	mutations := server.pendingmutations
-	server.pendingmutations = make([]arenaservertypes.AgentMutationBatch, 0)
+	server.pendingmutations = make([]types.AgentMutationBatch, 0)
 	server.mutationsmutex.Unlock()
 
 	return mutations

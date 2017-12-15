@@ -1,11 +1,10 @@
-package agentmanifest
+package types
 
 import (
 	"encoding/json"
 	"io/ioutil"
 	"path"
 
-	arenaservertypes "github.com/bytearena/core/arenaserver/types"
 	bettererrors "github.com/xtuc/better-errors"
 )
 
@@ -28,13 +27,13 @@ const (
 )
 
 func GetByAgentContainer(
-	container *arenaservertypes.AgentContainer,
-	orch arenaservertypes.ContainerOrchestrator,
-) (*AgentManifest, error) {
+	dockerImageName string,
+	orch ContainerOrchestrator,
+) (AgentManifest, error) {
 
 	inspectResult, _, _ := orch.GetCli().ImageInspectWithRaw(
 		orch.GetContext(),
-		container.ImageName,
+		dockerImageName,
 	)
 
 	labels := inspectResult.Config.Labels
@@ -44,27 +43,27 @@ func GetByAgentContainer(
 	)
 
 	if err != nil {
-		return err
+		return agentManifest, err
 	}
 
-	return agentManifest
+	return agentManifest, nil
 }
 
-func ParseFromString(content []byte) (*AgentManifest, error) {
+func ParseFromString(content []byte) (AgentManifest, error) {
 	var manifest AgentManifest
 
 	err := json.Unmarshal(content, &manifest)
 
-	return &manifest, err
+	return manifest, err
 }
 
-func ParseFromDir(dir string) (*AgentManifest, error) {
+func ParseFromDir(dir string) (AgentManifest, error) {
 	fileLocation := path.Join(dir, AGENT_MANIFEST_FILENAME)
 
 	content, err := ioutil.ReadFile(fileLocation)
 
 	if err != nil {
-		return nil, bettererrors.
+		return AgentManifest{}, bettererrors.
 			New("Parsing agent's manifest error").
 			SetContext("filename", AGENT_MANIFEST_FILENAME).
 			With(bettererrors.NewFromErr(err))
@@ -73,11 +72,7 @@ func ParseFromDir(dir string) (*AgentManifest, error) {
 	return ParseFromString(content)
 }
 
-func Validate(manifest *AgentManifest) error {
-
-	if manifest == nil {
-		return bettererrors.New("Invalid manifest file")
-	}
+func Validate(manifest AgentManifest) error {
 
 	if manifest.Id == "" {
 		return bettererrors.New("Missing id")

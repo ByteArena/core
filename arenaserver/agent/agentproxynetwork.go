@@ -3,7 +3,7 @@ package agent
 import (
 	"net"
 
-	"github.com/bytearena/core/arenaserver/types"
+	"github.com/bytearena/core/common/types"
 )
 
 type AgentProxyNetworkInterface interface {

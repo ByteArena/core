@@ -7,7 +7,7 @@ import (
 	"github.com/bytearena/box2d"
 	"github.com/bytearena/ecs"
 
-	"github.com/bytearena/core/arenaserver/types"
+	"github.com/bytearena/core/common/types"
 	commontypes "github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/utils/vector"
 	"github.com/bytearena/core/game/common"

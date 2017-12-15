@@ -11,8 +11,8 @@ import (
 	notify "github.com/bitly/go-notify"
 	"github.com/bytearena/core/arenaserver/agent"
 	"github.com/bytearena/core/arenaserver/comm"
-	arenaservertypes "github.com/bytearena/core/arenaserver/types"
 	"github.com/bytearena/core/common/assert"
+	"github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/utils"
 	uuid "github.com/satori/go.uuid"
 
@@ -124,7 +124,7 @@ func (s *Server) NetSend(message []byte, conn net.Conn) error {
 	return s.commserver.Send(message, conn)
 }
 
-func (server *Server) PushMutationBatch(batch arenaservertypes.AgentMutationBatch) {
+func (server *Server) PushMutationBatch(batch types.AgentMutationBatch) {
 	server.mutationsmutex.Lock()
 	server.pendingmutations = append(server.pendingmutations, batch)
 	server.mutationsmutex.Unlock()
@@ -134,7 +134,7 @@ func (server *Server) PushMutationBatch(batch arenaservertypes.AgentMutationBatc
 
 /* <implementing types.CommunicatorDispatcherInterface> */
 func (server *Server) ImplementsCommDispatcherInterface() {}
-func (server *Server) DispatchAgentMessage(msg arenaservertypes.AgentMessage) error {
+func (server *Server) DispatchAgentMessage(msg types.AgentMessage) error {
 
 	agentproxy, err := server.getAgentProxy(msg.GetAgentId().String())
 	if err != nil {
@@ -150,7 +150,7 @@ func (server *Server) DispatchAgentMessage(msg arenaservertypes.AgentMessage) er
 	assert.Assert(msg.GetMethod() != "", "Method is null")
 
 	switch msg.GetMethod() {
-	case arenaservertypes.AgentMessageType.Handshake:
+	case types.AgentMessageType.Handshake:
 		{
 			if _, found := server.agentproxieshandshakes[msg.GetAgentId()]; found {
 				return errors.New("ERROR: Received duplicate handshake from agent " + agentproxy.String())
@@ -158,7 +158,7 @@ func (server *Server) DispatchAgentMessage(msg arenaservertypes.AgentMessage) er
 
 			server.agentproxieshandshakes[msg.GetAgentId()] = struct{}{}
 
-			var handshake arenaservertypes.AgentMessagePayloadHandshake
+			var handshake types.AgentMessagePayloadHandshake
 			err = json.Unmarshal(msg.GetPayload(), &handshake)
 			if err != nil {
 				return bettererrors.
@@ -178,7 +178,7 @@ func (server *Server) DispatchAgentMessage(msg arenaservertypes.AgentMessage) er
 				handshake.Version = "UNKNOWN"
 			}
 
-			if !utils.IsStringInArray(arenaservertypes.PROTOCOL_VERSIONS, handshake.Version) {
+			if !utils.IsStringInArray(types.PROTOCOL_VERSIONS, handshake.Version) {
 				return bettererrors.
 					New("Unsupported agent protocol").
 					SetContext("agent", ag.String()).
@@ -205,10 +205,10 @@ func (server *Server) DispatchAgentMessage(msg arenaservertypes.AgentMessage) er
 
 			break
 		}
-	case arenaservertypes.AgentMessageType.Actions:
+	case types.AgentMessageType.Actions:
 		{
 			var actionsMessage struct {
-				Actions []arenaservertypes.AgentMessagePayloadActions
+				Actions []types.AgentMessagePayloadActions
 			}
 
 			err = json.Unmarshal(msg.GetPayload(), &actionsMessage)
@@ -220,7 +220,7 @@ func (server *Server) DispatchAgentMessage(msg arenaservertypes.AgentMessage) er
 					SetContext("payload", string(msg.GetPayload()))
 			}
 
-			mutationbatch := arenaservertypes.AgentMutationBatch{
+			mutationbatch := types.AgentMutationBatch{
 				AgentProxyUUID: agentproxy.GetProxyUUID(),
 				AgentEntityId:  agentproxy.GetEntityId(),
 				Mutations:      actionsMessage.Actions,

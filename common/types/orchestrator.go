@@ -6,12 +6,10 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	uuid "github.com/satori/go.uuid"
-
-	t "github.com/bytearena/core/common/types"
 )
 
 type ContainerOrchestrator interface {
-	StartAgentContainer(ctner *AgentContainer, addTearDownCall func(t.TearDownCallback)) error
+	StartAgentContainer(ctner *AgentContainer, addTearDownCall func(TearDownCallback)) error
 	RemoveAgentContainer(ctner *AgentContainer) error
 	Wait(ctner *AgentContainer) (<-chan container.ContainerWaitOKBody, <-chan error)
 	TearDown(container *AgentContainer)
