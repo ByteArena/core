@@ -38,8 +38,16 @@ func GetAgentManifestByDockerImageName(
 
 	labels := inspectResult.Config.Labels
 
+	manifestString := labels[AGENT_MANIFEST_LABEL_KEY]
+
+	if manifestString == "" {
+		return AgentManifest{}, bettererrors.
+			New("Manifest not found, are you sure it is an agent?").
+			SetContext("image", dockerImageName)
+	}
+
 	agentManifest, err := ParseAgentManifestFromString(
-		[]byte(labels[AGENT_MANIFEST_LABEL_KEY]),
+		[]byte(manifestString),
 	)
 
 	if err != nil {
