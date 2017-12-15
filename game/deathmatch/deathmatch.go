@@ -1,6 +1,8 @@
 package deathmatch
 
 import (
+	"encoding/json"
+
 	ebus "github.com/asaskevich/EventBus"
 	"github.com/go-gl/mathgl/mgl64"
 
@@ -412,6 +414,33 @@ func (deathmatch *DeathmatchGame) GetAgentWelcome(entityid ecs.EntityID) []byte 
 	}
 
 	res, _ := p.MarshalJSON()
+	return res
+}
+
+func (deathmatch *DeathmatchGame) GetVizInitJson() []byte {
+
+	type vizMsgInit struct {
+		//Map *mapcontainer.MapContainer `json:"map"`
+		MapName string         `json:"mapname"`
+		Tps     int            `json:"tps"`
+		Agents  []*types.Agent `json:"agents"`
+	}
+
+	type VizMessage struct {
+		Type string      `json:"type"`
+		Data interface{} `json:"data"`
+	}
+
+	initMsg := VizMessage{
+		Type: "init",
+		Data: vizMsgInit{
+			MapName: deathmatch.gameDescription.GetName(),
+			Tps:     deathmatch.gameDescription.GetTps(),
+			Agents:  deathmatch.gameDescription.GetAgents(),
+		},
+	}
+
+	res, _ := json.Marshal(initMsg)
 	return res
 }
 

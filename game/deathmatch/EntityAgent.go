@@ -13,7 +13,7 @@ import (
 	"github.com/bytearena/core/game/deathmatch/events"
 )
 
-func (deathmatch *DeathmatchGame) NewEntityAgent(agent types.Agent, spawnPosition vector.Vector2) *ecs.Entity {
+func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPosition vector.Vector2) *ecs.Entity {
 
 	agentEntity := deathmatch.manager.NewEntity()
 

@@ -34,7 +34,7 @@ func Websocket(fetchVizGames func() ([]*types.VizGame, error)) func(w http.Respo
 		foundgame := false
 
 		for _, vizgameit := range vizgames {
-			if vizgameit.GetGame().GetId() == vars["id"] {
+			if vizgameit.GetGameDescription().GetId() == vars["id"] {
 				vizgame = vizgameit
 				foundgame = true
 				break
@@ -89,7 +89,7 @@ func Websocket(fetchVizGames func() ([]*types.VizGame, error)) func(w http.Respo
 		// Listen to viz messages coming from arenaserver
 		vizmsgchan := make(chan interface{})
 
-		notify.Start("viz:message:"+vizgame.GetGame().GetId(), vizmsgchan)
+		notify.Start("viz:message:"+vizgame.GetGameDescription().GetId(), vizmsgchan)
 
 		for {
 			select {

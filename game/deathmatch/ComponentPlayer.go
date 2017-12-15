@@ -20,5 +20,5 @@ type Player struct {
 
 	Stats stats
 
-	Agent types.Agent
+	Agent *types.Agent
 }

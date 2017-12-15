@@ -15,7 +15,7 @@ import (
 	bettererrors "github.com/xtuc/better-errors"
 )
 
-func (s *Server) RegisterAgent(agent types.Agent) {
+func (s *Server) RegisterAgent(agent *types.Agent) {
 	agentimage := agent.Manifest.Id
 
 	///////////////////////////////////////////////////////////////////////////
@@ -52,6 +52,8 @@ func (s *Server) RegisterAgent(agent types.Agent) {
 
 	s.setAgentProxy(agentproxy)
 	s.agentimages[agentproxy.GetProxyUUID()] = agentimage
+
+	agent.EntityID = agententity.GetID()
 
 	//s.Log(EventLog{"Register agent " + agentimage})
 }

@@ -11,6 +11,6 @@ type GameDescriptionInterface interface {
 	GetRunStatus() int
 	GetLaunchedAt() string
 	GetEndedAt() string
-	GetAgents() []Agent
+	GetAgents() []*Agent
 	GetMapContainer() *mapcontainer.MapContainer
 }
