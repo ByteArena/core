@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/pkg/term"
 
@@ -15,6 +16,7 @@ import (
 	bettererrors "github.com/xtuc/better-errors"
 
 	arenaservertypes "github.com/bytearena/core/arenaserver/types"
+	"github.com/bytearena/core/common/agentmanifest"
 	"github.com/bytearena/core/common/utils"
 )
 
@@ -80,6 +82,22 @@ func CommonCreateAgentContainer(orch arenaservertypes.ContainerOrchestrator, age
 
 		reader.Close()
 	}
+
+	// Remove this
+	inspectResult, _, _ := orch.GetCli().ImageInspectWithRaw(
+		orch.GetContext(),
+		normalizedDockerimage,
+	)
+
+	labels := inspectResult.Config.Labels
+
+	agentManifest, _ := agentmanifest.ParseFromString(
+		[]byte(labels[agentmanifest.AGENT_MANIFEST_LABEL_KEY]),
+	)
+
+	spew.Dump(agentManifest)
+
+	// Remove this
 
 	containerconfig := container.Config{
 		Image: normalizedDockerimage,
