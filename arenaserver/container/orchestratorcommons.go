@@ -5,7 +5,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/pkg/term"
 
@@ -91,11 +90,12 @@ func CommonCreateAgentContainer(orch arenaservertypes.ContainerOrchestrator, age
 
 	labels := inspectResult.Config.Labels
 
-	agentManifest, _ := agentmanifest.ParseFromString(
+	/*agentManifest, _ := */
+	agentmanifest.ParseFromString(
 		[]byte(labels[agentmanifest.AGENT_MANIFEST_LABEL_KEY]),
 	)
 
-	spew.Dump(agentManifest)
+	//log.Println(agentManifest)
 
 	// Remove this
 

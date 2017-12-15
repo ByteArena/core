@@ -62,7 +62,7 @@ func (server *Server) listen() chan interface{} {
 		}
 	}()
 
-	server.events <- EventLog{"Server listening on port " + strconv.Itoa(server.port)}
+	//server.events <- EventLog{"Server listening on port " + strconv.Itoa(server.port)}
 
 	err := server.commserver.Listen(server)
 	utils.Check(err, "Failed to listen on "+serveraddress)
