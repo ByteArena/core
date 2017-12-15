@@ -141,7 +141,7 @@ func NewServer(
 }
 
 func (s Server) getNbExpectedagents() int {
-	return len(s.GetGameDescription().GetContestants())
+	return len(s.GetGameDescription().GetAgents())
 }
 
 ///////////////////////////////////////////////////////////////////////////////

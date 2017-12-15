@@ -20,5 +20,5 @@ type Player struct {
 
 	Stats stats
 
-	Contestant types.Contestant
+	Agent types.Agent
 }

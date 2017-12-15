@@ -13,9 +13,9 @@ import (
 	"github.com/bytearena/core/game/deathmatch/events"
 )
 
-func (deathmatch *DeathmatchGame) NewEntityAgent(contestant types.Contestant, spawnPosition vector.Vector2) *ecs.Entity {
+func (deathmatch *DeathmatchGame) NewEntityAgent(agent types.Agent, spawnPosition vector.Vector2) *ecs.Entity {
 
-	agent := deathmatch.manager.NewEntity()
+	agentEntity := deathmatch.manager.NewEntity()
 
 	///////////////////////////////////////////////////////////////////////////
 	// Définition de ses caractéristiques physiques de l'agent (spécifications)
@@ -54,7 +54,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(contestant types.Contestant, sp
 	body.CreateFixtureFromDef(&fixturedef)
 	body.SetUserData(types.MakePhysicalBodyDescriptor(
 		types.PhysicalBodyDescriptorType.Agent,
-		agent.GetID(),
+		agentEntity.GetID(),
 	))
 	body.SetBullet(false)
 
@@ -64,7 +64,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(contestant types.Contestant, sp
 
 	tps := deathmatch.gameDescription.GetTps()
 
-	return agent.
+	return agentEntity.
 		AddComponent(deathmatch.physicalBodyComponent, &PhysicalBody{
 			body:               body,
 			maxSpeed:           maxSpeed,
@@ -89,7 +89,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(contestant types.Contestant, sp
 			life:    1000, // Current life level
 		}).
 		AddComponent(deathmatch.playerComponent, &Player{
-			Contestant: contestant,
+			Agent: agent,
 		}).
 		AddComponent(deathmatch.renderComponent, &Render{
 			type_:       "agent",
@@ -123,7 +123,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(contestant types.Contestant, sp
 		AddComponent(deathmatch.lifecycleComponent, &Lifecycle{
 			onDeath: func() {
 
-				qr := deathmatch.getEntity(agent.GetID(), deathmatch.respawnComponent, deathmatch.lifecycleComponent)
+				qr := deathmatch.getEntity(agentEntity.GetID(), deathmatch.respawnComponent, deathmatch.lifecycleComponent)
 				if qr == nil {
 					// should never happen
 					return
@@ -137,7 +137,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(contestant types.Contestant, sp
 				respawnAspect.respawningCountdown = deathmatch.gameDescription.GetTps() * 5 // 5 seconds
 
 				deathmatch.BusPublish(events.EntityRespawning{
-					Entity:     agent.GetID(),
+					Entity:     agentEntity.GetID(),
 					RespawnsIn: respawnAspect.respawningCountdown,
 				})
 			},
@@ -145,7 +145,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(contestant types.Contestant, sp
 		AddComponent(deathmatch.respawnComponent, &Respawn{
 			onRespawn: func() {
 
-				qr := deathmatch.getEntity(agent.GetID(),
+				qr := deathmatch.getEntity(agentEntity.GetID(),
 					deathmatch.physicalBodyComponent,
 					deathmatch.lifecycleComponent,
 					deathmatch.healthComponent,
@@ -169,7 +169,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(contestant types.Contestant, sp
 				healthAspect.Restore()
 
 				deathmatch.BusPublish(events.EntityRespawned{
-					Entity:        agent.GetID(),
+					Entity:        agentEntity.GetID(),
 					StartingPoint: [2]float64{spawnPoint.GetX(), spawnPoint.GetY()},
 				})
 			},

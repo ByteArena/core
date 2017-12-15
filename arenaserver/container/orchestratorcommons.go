@@ -83,22 +83,6 @@ func CommonCreateAgentContainer(orch arenaservertypes.ContainerOrchestrator, age
 		reader.Close()
 	}
 
-	// Remove this
-	inspectResult, _, _ := orch.GetCli().ImageInspectWithRaw(
-		orch.GetContext(),
-		normalizedDockerimage,
-	)
-
-	labels := inspectResult.Config.Labels
-
-	agentManifest, _ := agentmanifest.ParseFromString(
-		[]byte(labels[agentmanifest.AGENT_MANIFEST_LABEL_KEY]),
-	)
-
-	spew.Dump(agentManifest)
-
-	// Remove this
-
 	containerconfig := container.Config{
 		Image: normalizedDockerimage,
 		User:  containerUnixUser,

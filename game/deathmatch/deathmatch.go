@@ -448,8 +448,8 @@ func (deathmatch *DeathmatchGame) GetVizFrameJson() []byte {
 			playerAspect := entityResultPlayer.Components[deathmatch.playerComponent].(*Player)
 
 			obj.PlayerInfo = &commontypes.PlayerInfo{
-				PlayerName: playerAspect.Contestant.AgentName,
-				PlayerId:   playerAspect.Contestant.Id,
+				PlayerName: playerAspect.Agent.Manifest.Name,
+				PlayerId:   playerAspect.Agent.Manifest.Id,
 				Score:      commontypes.VizMessagePlayerScore{playerAspect.Score},
 				IsAlive:    true,
 			}

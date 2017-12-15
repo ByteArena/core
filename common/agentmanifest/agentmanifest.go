@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"path"
 
+	arenaservertypes "github.com/bytearena/core/arenaserver/types"
 	bettererrors "github.com/xtuc/better-errors"
 )
 
@@ -25,6 +26,29 @@ const (
 	AGENT_MANIFEST_LABEL_KEY = "bytearena.manifest"
 	AGENT_MANIFEST_FILENAME  = "ba.json"
 )
+
+func GetByAgentContainer(
+	container *arenaservertypes.AgentContainer,
+	orch arenaservertypes.ContainerOrchestrator,
+) (*AgentManifest, error) {
+
+	inspectResult, _, _ := orch.GetCli().ImageInspectWithRaw(
+		orch.GetContext(),
+		container.ImageName,
+	)
+
+	labels := inspectResult.Config.Labels
+
+	agentManifest, err := ParseFromString(
+		[]byte(labels[AGENT_MANIFEST_LABEL_KEY]),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return agentManifest
+}
 
 func ParseFromString(content []byte) (*AgentManifest, error) {
 	var manifest AgentManifest

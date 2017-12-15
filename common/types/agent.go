@@ -1,9 +1,9 @@
 package types
 
-type AgentType struct {
-	Id          string           `json:"id"`
-	Name        string           `json:"name"`
-	Title       string           `json:"title"`
-	Image       *DockerImageType `json:"image"`
-	Contestants []ContestantType `json:"contestants"`
+import (
+	"github.com/bytearena/core/common/agentmanifest"
+)
+
+type Agent struct {
+	Manifest agentmanifest.AgentManifest
 }
