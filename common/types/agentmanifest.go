@@ -26,7 +26,7 @@ const (
 	AGENT_MANIFEST_FILENAME  = "ba.json"
 )
 
-func GetByAgentContainer(
+func GetAgentManifestByDockerImageName(
 	dockerImageName string,
 	orch ContainerOrchestrator,
 ) (AgentManifest, error) {
@@ -38,7 +38,7 @@ func GetByAgentContainer(
 
 	labels := inspectResult.Config.Labels
 
-	agentManifest, err := ParseFromString(
+	agentManifest, err := ParseAgentManifestFromString(
 		[]byte(labels[AGENT_MANIFEST_LABEL_KEY]),
 	)
 
@@ -49,7 +49,7 @@ func GetByAgentContainer(
 	return agentManifest, nil
 }
 
-func ParseFromString(content []byte) (AgentManifest, error) {
+func ParseAgentManifestFromString(content []byte) (AgentManifest, error) {
 	var manifest AgentManifest
 
 	err := json.Unmarshal(content, &manifest)
@@ -57,7 +57,7 @@ func ParseFromString(content []byte) (AgentManifest, error) {
 	return manifest, err
 }
 
-func ParseFromDir(dir string) (AgentManifest, error) {
+func ParseAgentManifestFromDir(dir string) (AgentManifest, error) {
 	fileLocation := path.Join(dir, AGENT_MANIFEST_FILENAME)
 
 	content, err := ioutil.ReadFile(fileLocation)
@@ -69,10 +69,10 @@ func ParseFromDir(dir string) (AgentManifest, error) {
 			With(bettererrors.NewFromErr(err))
 	}
 
-	return ParseFromString(content)
+	return ParseAgentManifestFromString(content)
 }
 
-func Validate(manifest AgentManifest) error {
+func ValidateAgentManifest(manifest AgentManifest) error {
 
 	if manifest.Id == "" {
 		return bettererrors.New("Missing id")
@@ -85,7 +85,7 @@ func Validate(manifest AgentManifest) error {
 	return nil
 }
 
-func (manifest AgentManifest) ToString() string {
+func (manifest AgentManifest) String() string {
 	bytes, _ := json.Marshal(manifest)
 
 	return string(bytes)
