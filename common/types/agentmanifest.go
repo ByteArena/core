@@ -71,8 +71,12 @@ func ParseAgentManifestFromString(content []byte) (AgentManifest, error) {
 	return manifest, err
 }
 
+func GetManifestLocation(dir string) string {
+	return path.Join(dir, AGENT_MANIFEST_FILENAME)
+}
+
 func ParseAgentManifestFromDir(dir string) (AgentManifest, error) {
-	fileLocation := path.Join(dir, AGENT_MANIFEST_FILENAME)
+	fileLocation := GetManifestLocation(dir)
 
 	content, err := ioutil.ReadFile(fileLocation)
 
