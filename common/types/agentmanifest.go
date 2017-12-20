@@ -31,10 +31,16 @@ func GetAgentManifestByDockerImageName(
 	orch ContainerOrchestrator,
 ) (AgentManifest, error) {
 
-	inspectResult, _, _ := orch.GetCli().ImageInspectWithRaw(
+	inspectResult, _, inspectResulterr := orch.GetCli().ImageInspectWithRaw(
 		orch.GetContext(),
 		dockerImageName,
 	)
+
+	if inspectResulterr != nil {
+		return AgentManifest{}, bettererrors.
+			New("Could not find Docker image").
+			SetContext("image", dockerImageName)
+	}
 
 	labels := inspectResult.Config.Labels
 
