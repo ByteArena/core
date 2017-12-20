@@ -15,10 +15,10 @@ type AgentManifest struct {
 	Author      string `json:"author"`
 	License     string `json:"license"`
 	Language    string `json:"language"`
-	GameMode    string `json:"gameMode"`
-	RepoURL     string `json:"RepoURL"`
+	GameMode    string `json:"gamemode"`
+	RepoURL     string `json:"repourl"`
 	Description string `json:"description"`
-	AvatarURL   string `json:"avatarURL"`
+	AvatarURL   string `json:"avatarurl"`
 }
 
 const (

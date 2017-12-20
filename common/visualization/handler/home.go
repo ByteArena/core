@@ -20,7 +20,7 @@ func Home(fetchVizGames func() ([]*types.VizGame, error)) func(w http.ResponseWr
 		}
 
 		for _, vizgame := range vizgames {
-			game := vizgame.GetGame()
+			game := vizgame.GetGameDescription()
 			w.Write([]byte("<a href='/arena/" + game.GetId() + "'>" + game.GetName() + " (" + strconv.Itoa(vizgame.GetNumberWatchers()) + " watchers right now)</a><br />"))
 		}
 	}

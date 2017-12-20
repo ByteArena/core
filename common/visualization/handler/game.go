@@ -29,8 +29,8 @@ func Game(fetchVizGames func() ([]*types.VizGame, error), mappack *mappack.Mappa
 		foundgame := false
 
 		for _, vizgame := range vizgames {
-			if vizgame.GetGame().GetId() == vars["id"] {
-				gameDescription = vizgame.GetGame()
+			if vizgame.GetGameDescription().GetId() == vars["id"] {
+				gameDescription = vizgame.GetGameDescription()
 				foundgame = true
 				break
 			}
