@@ -17,3 +17,7 @@ func (m *Mailbox) PopMessages() []mailboxmessages.MailboxMessageInterface {
 	defer func() { m.messages = make([]mailboxmessages.MailboxMessageInterface, 0) }()
 	return m.messages
 }
+
+func (m *Mailbox) PeekMessages() []mailboxmessages.MailboxMessageInterface {
+	return m.messages
+}

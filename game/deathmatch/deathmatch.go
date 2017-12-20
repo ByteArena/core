@@ -2,6 +2,7 @@ package deathmatch
 
 import (
 	"encoding/json"
+	"strconv"
 
 	ebus "github.com/asaskevich/EventBus"
 	"github.com/go-gl/mathgl/mgl64"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/bytearena/core/common/types"
 	commontypes "github.com/bytearena/core/common/types"
-	"github.com/bytearena/core/common/utils/vector"
 	"github.com/bytearena/core/game/common"
 	"github.com/bytearena/core/game/deathmatch/events"
 	"github.com/bytearena/core/game/deathmatch/mailboxmessages"
@@ -65,6 +65,8 @@ type DeathmatchGame struct {
 
 	PhysicalWorld     *box2d.B2World
 	collisionListener *collisionListener
+
+	vizframe []byte
 }
 
 func NewDeathmatchGame(gameDescription commontypes.GameDescriptionInterface) *DeathmatchGame {
@@ -354,6 +356,8 @@ func (deathmatch *DeathmatchGame) Step(ticknum int, dt float64, mutations []type
 
 	//watch.Stop("Step")
 	//fmt.Println(watch.String())
+
+	deathmatch.ComputeVizFrame(mailboxes)
 }
 
 func (deathmatch *DeathmatchGame) GetAgentPerception(entityid ecs.EntityID) []byte {
@@ -445,11 +449,19 @@ func (deathmatch *DeathmatchGame) GetVizInitJson() []byte {
 }
 
 func (deathmatch *DeathmatchGame) GetVizFrameJson() []byte {
+	return deathmatch.vizframe
+}
+
+// </GameInterface>
+
+func (deathmatch *DeathmatchGame) ComputeVizFrame(mailboxes map[ecs.EntityID]([]mailboxmessages.MailboxMessageInterface)) {
+
 	msg := commontypes.VizMessage{
 		GameID:        deathmatch.gameDescription.GetId(),
 		Objects:       []commontypes.VizMessageObject{},
 		DebugPoints:   make([][2]float64, 0),
 		DebugSegments: make([][2][2]float64, 0),
+		Events:        []commontypes.VizMessageEvent{},
 	}
 
 	for _, entityresult := range deathmatch.renderableView.Get() {
@@ -478,7 +490,7 @@ func (deathmatch *DeathmatchGame) GetVizFrameJson() []byte {
 
 			obj.PlayerInfo = &commontypes.PlayerInfo{
 				PlayerName: playerAspect.Agent.Manifest.Name,
-				PlayerId:   playerAspect.Agent.Manifest.Id,
+				PlayerId:   entityresult.Entity.GetID().String(),
 				Score:      commontypes.VizMessagePlayerScore{playerAspect.Score},
 				IsAlive:    true,
 			}
@@ -496,13 +508,12 @@ func (deathmatch *DeathmatchGame) GetVizFrameJson() []byte {
 
 		msg.Objects = append(msg.Objects, obj)
 
-		scaledDebugPoints := make([][2]float64, len(renderAspect.DebugPoints))
-		for i := 0; i < len(renderAspect.DebugPoints); i++ {
-			scaledDebugPoints[i] = vector.Vector2(renderAspect.DebugPoints[i]).
-				Transform(deathmatch.physicalToAgentSpaceInverseTransform).
-				ToFloatArray()
-		}
-
+		// scaledDebugPoints := make([][2]float64, len(renderAspect.DebugPoints))
+		// for i := 0; i < len(renderAspect.DebugPoints); i++ {
+		// 	scaledDebugPoints[i] = vector.Vector2(renderAspect.DebugPoints[i]).
+		// 		Transform(deathmatch.physicalToAgentSpaceInverseTransform).
+		// 		ToFloatArray()
+		// }
 		// msg.DebugPoints = append(msg.DebugPoints, scaledDebugPoints...)
 
 		// scaledDebugSegments := make([][2][2]float64, len(renderAspect.DebugSegments))
@@ -515,11 +526,39 @@ func (deathmatch *DeathmatchGame) GetVizFrameJson() []byte {
 		// msg.DebugSegments = append(msg.DebugSegments, scaledDebugSegments...)
 	}
 
-	res, _ := msg.MarshalJSON()
-	return res
-}
+	// Collecting events
+	for entityid, mailbox := range mailboxes {
 
-// </GameInterface>
+		for _, message := range mailbox {
+
+			var payload interface{}
+			subject := ""
+
+			switch v := message.(type) {
+			case mailboxmessages.YouHaveBeenFragged:
+				subject = v.Subject()
+				payload = map[string]string{
+					"who": strconv.Itoa(int(entityid)),
+					"by":  v.By,
+				}
+			case mailboxmessages.YouHaveRespawned:
+				subject = v.Subject()
+				payload = map[string]string{
+					"who": strconv.Itoa(int(entityid)),
+				}
+			}
+
+			if subject != "" {
+				msg.Events = append(msg.Events, commontypes.VizMessageEvent{
+					Subject: subject,
+					Payload: payload,
+				})
+			}
+		}
+	}
+
+	deathmatch.vizframe, _ = msg.MarshalJSON()
+}
 
 func initPhysicalWorld(deathmatch *DeathmatchGame) {
 

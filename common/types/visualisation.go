@@ -9,6 +9,7 @@ type VizMessage struct {
 	Objects       []VizMessageObject
 	DebugPoints   [][2]float64
 	DebugSegments [][2][2]float64
+	Events        []VizMessageEvent
 }
 
 type VizMessageObject struct {
@@ -31,4 +32,9 @@ type PlayerInfo struct {
 
 type VizMessagePlayerScore struct {
 	Value int
+}
+
+type VizMessageEvent struct {
+	Subject string
+	Payload interface{}
 }
