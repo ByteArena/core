@@ -40,7 +40,7 @@ func FailWith(err error) {
 
 		fmt.Println("")
 
-		fmt.Println("Please report this error here: https://github.com/ByteArena/cli/issues/new?" + urlOptions.Encode())
+		fmt.Println("Please report this error here: https://github.com/ByteArena/ba/issues/new?" + urlOptions.Encode())
 
 		os.Exit(1)
 	} else {
