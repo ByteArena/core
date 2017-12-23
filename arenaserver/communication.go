@@ -7,6 +7,7 @@ import (
 	"net"
 	"reflect"
 	"strconv"
+	"strings"
 
 	notify "github.com/bitly/go-notify"
 	"github.com/bytearena/core/arenaserver/agent"
@@ -149,7 +150,7 @@ func (server *Server) DispatchAgentMessage(msg types.AgentMessage) error {
 
 	assert.Assert(msg.GetMethod() != "", "Method is null")
 
-	switch msg.GetMethod() {
+	switch strings.ToLower(msg.GetMethod()) {
 	case types.AgentMessageType.Handshake:
 		{
 			if _, found := server.agentproxieshandshakes[msg.GetAgentId()]; found {
@@ -234,7 +235,7 @@ func (server *Server) DispatchAgentMessage(msg types.AgentMessage) error {
 		{
 			berror := bettererrors.
 				New("Unknown message type").
-				SetContext("method", msg.GetMethod().String())
+				SetContext("method", msg.GetMethod())
 
 			assert.AssertBE(false, berror)
 		}
