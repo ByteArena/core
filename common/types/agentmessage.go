@@ -8,27 +8,21 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type _privateAgentMessageMethod string
-
-func (p _privateAgentMessageMethod) String() string {
-	return string(p)
-}
-
 var AgentMessageType = struct {
-	Handshake _privateAgentMessageMethod
-	Actions   _privateAgentMessageMethod
+	Handshake string
+	Actions   string
 }{
-	Handshake: _privateAgentMessageMethod("Handshake"),
-	Actions:   _privateAgentMessageMethod("Actions"),
+	Handshake: "handshake",
+	Actions:   "actions",
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // The message wrapper; holds a Payload
 ///////////////////////////////////////////////////////////////////////////////
 type AgentMessage struct {
-	AgentId     uuid.UUID                  `json:"agentid"`
-	Method      _privateAgentMessageMethod `json:"method"`
-	Payload     json.RawMessage            `json:"payload"`
+	AgentId     uuid.UUID       `json:"agentid"`
+	Method      string          `json:"method"`
+	Payload     json.RawMessage `json:"payload"`
 	EmitterConn net.Conn
 }
 
@@ -36,7 +30,7 @@ func (m AgentMessage) GetAgentId() uuid.UUID {
 	return m.AgentId
 }
 
-func (m AgentMessage) GetMethod() _privateAgentMessageMethod {
+func (m AgentMessage) GetMethod() string {
 	return m.Method
 }
 
