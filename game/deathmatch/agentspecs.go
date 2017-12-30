@@ -17,13 +17,13 @@ type agentSpecs struct {
 	MaxShootEnergy    float64 `json:"maxshootenergy"`
 	ShootRecoveryRate float64 `json:"shootrecoveryrate"`
 
-	Gear map[string]agentGearSpecs
+	Gear map[string]agentGearSpecs `json:"gear"`
 }
 
 type agentGearSpecs struct {
-	Genre string // Gun
-	Kind  string
-	Specs interface{}
+	Genre string      `json:"genre"` // Gun
+	Kind  string      `json:"kind"`
+	Specs interface{} `json:"specs"`
 }
 
 type gunSpecs struct {
