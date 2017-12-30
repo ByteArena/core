@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonF5fe3c73DecodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessages(in *jlexer.Lexer, out *Stats) {
+func easyjsonF5fe3c73DecodeGithubComBytearenaCoreGameDeathmatchMailboxmessages(in *jlexer.Lexer, out *Stats) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -36,7 +36,7 @@ func easyjsonF5fe3c73DecodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessa
 			continue
 		}
 		switch key {
-		case "distanceTravelled":
+		case "distancetravelled":
 			out.DistanceTravelled = float64(in.Float64())
 		default:
 			in.SkipRecursive()
@@ -48,7 +48,7 @@ func easyjsonF5fe3c73DecodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessa
 		in.Consumed()
 	}
 }
-func easyjsonF5fe3c73EncodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessages(out *jwriter.Writer, in Stats) {
+func easyjsonF5fe3c73EncodeGithubComBytearenaCoreGameDeathmatchMailboxmessages(out *jwriter.Writer, in Stats) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -56,7 +56,7 @@ func easyjsonF5fe3c73EncodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessa
 		out.RawByte(',')
 	}
 	first = false
-	out.RawString("\"distanceTravelled\":")
+	out.RawString("\"distancetravelled\":")
 	out.Float64(float64(in.DistanceTravelled))
 	out.RawByte('}')
 }
@@ -64,23 +64,23 @@ func easyjsonF5fe3c73EncodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessa
 // MarshalJSON supports json.Marshaler interface
 func (v Stats) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonF5fe3c73EncodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessages(&w, v)
+	easyjsonF5fe3c73EncodeGithubComBytearenaCoreGameDeathmatchMailboxmessages(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Stats) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonF5fe3c73EncodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessages(w, v)
+	easyjsonF5fe3c73EncodeGithubComBytearenaCoreGameDeathmatchMailboxmessages(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Stats) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonF5fe3c73DecodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessages(&r, v)
+	easyjsonF5fe3c73DecodeGithubComBytearenaCoreGameDeathmatchMailboxmessages(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Stats) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonF5fe3c73DecodeGithubComBytearenaBytearenaGameDeathmatchMailboxmessages(l, v)
+	easyjsonF5fe3c73DecodeGithubComBytearenaCoreGameDeathmatchMailboxmessages(l, v)
 }

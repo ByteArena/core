@@ -4,7 +4,6 @@ package deathmatch
 
 import (
 	json "encoding/json"
-
 	types "github.com/bytearena/core/common/types"
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
@@ -19,7 +18,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch(in *jlexer.Lexer, out *gunSpecs) {
+func easyjson69d6c65dDecodeGithubComBytearenaCoreGameDeathmatch(in *jlexer.Lexer, out *gunSpecs) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -58,7 +57,7 @@ func easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch(in *jlexer.
 		in.Consumed()
 	}
 }
-func easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch(out *jwriter.Writer, in gunSpecs) {
+func easyjson69d6c65dEncodeGithubComBytearenaCoreGameDeathmatch(out *jwriter.Writer, in gunSpecs) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -98,27 +97,27 @@ func easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch(out *jwrite
 // MarshalJSON supports json.Marshaler interface
 func (v gunSpecs) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch(&w, v)
+	easyjson69d6c65dEncodeGithubComBytearenaCoreGameDeathmatch(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v gunSpecs) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch(w, v)
+	easyjson69d6c65dEncodeGithubComBytearenaCoreGameDeathmatch(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *gunSpecs) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch(&r, v)
+	easyjson69d6c65dDecodeGithubComBytearenaCoreGameDeathmatch(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *gunSpecs) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch(l, v)
+	easyjson69d6c65dDecodeGithubComBytearenaCoreGameDeathmatch(l, v)
 }
-func easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch1(in *jlexer.Lexer, out *agentSpecs) {
+func easyjson69d6c65dDecodeGithubComBytearenaCoreGameDeathmatch1(in *jlexer.Lexer, out *agentSpecs) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -153,7 +152,7 @@ func easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch1(in *jlexer
 			out.MaxShootEnergy = float64(in.Float64())
 		case "shootrecoveryrate":
 			out.ShootRecoveryRate = float64(in.Float64())
-		case "Gear":
+		case "gear":
 			if in.IsNull() {
 				in.Skip()
 			} else {
@@ -183,7 +182,7 @@ func easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch1(in *jlexer
 		in.Consumed()
 	}
 }
-func easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch1(out *jwriter.Writer, in agentSpecs) {
+func easyjson69d6c65dEncodeGithubComBytearenaCoreGameDeathmatch1(out *jwriter.Writer, in agentSpecs) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -239,7 +238,7 @@ func easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch1(out *jwrit
 		out.RawByte(',')
 	}
 	first = false
-	out.RawString("\"Gear\":")
+	out.RawString("\"gear\":")
 	if in.Gear == nil && (out.Flags&jwriter.NilMapAsEmpty) == 0 {
 		out.RawString(`null`)
 	} else {
@@ -262,27 +261,27 @@ func easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch1(out *jwrit
 // MarshalJSON supports json.Marshaler interface
 func (v agentSpecs) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch1(&w, v)
+	easyjson69d6c65dEncodeGithubComBytearenaCoreGameDeathmatch1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v agentSpecs) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch1(w, v)
+	easyjson69d6c65dEncodeGithubComBytearenaCoreGameDeathmatch1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *agentSpecs) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch1(&r, v)
+	easyjson69d6c65dDecodeGithubComBytearenaCoreGameDeathmatch1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *agentSpecs) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch1(l, v)
+	easyjson69d6c65dDecodeGithubComBytearenaCoreGameDeathmatch1(l, v)
 }
-func easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch2(in *jlexer.Lexer, out *agentGearSpecs) {
+func easyjson69d6c65dDecodeGithubComBytearenaCoreGameDeathmatch2(in *jlexer.Lexer, out *agentGearSpecs) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -301,11 +300,11 @@ func easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch2(in *jlexer
 			continue
 		}
 		switch key {
-		case "Genre":
+		case "genre":
 			out.Genre = string(in.String())
-		case "Kind":
+		case "kind":
 			out.Kind = string(in.String())
-		case "Specs":
+		case "specs":
 			if m, ok := out.Specs.(easyjson.Unmarshaler); ok {
 				m.UnmarshalEasyJSON(in)
 			} else if m, ok := out.Specs.(json.Unmarshaler); ok {
@@ -323,7 +322,7 @@ func easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch2(in *jlexer
 		in.Consumed()
 	}
 }
-func easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch2(out *jwriter.Writer, in agentGearSpecs) {
+func easyjson69d6c65dEncodeGithubComBytearenaCoreGameDeathmatch2(out *jwriter.Writer, in agentGearSpecs) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -331,19 +330,19 @@ func easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch2(out *jwrit
 		out.RawByte(',')
 	}
 	first = false
-	out.RawString("\"Genre\":")
+	out.RawString("\"genre\":")
 	out.String(string(in.Genre))
 	if !first {
 		out.RawByte(',')
 	}
 	first = false
-	out.RawString("\"Kind\":")
+	out.RawString("\"kind\":")
 	out.String(string(in.Kind))
 	if !first {
 		out.RawByte(',')
 	}
 	first = false
-	out.RawString("\"Specs\":")
+	out.RawString("\"specs\":")
 	if m, ok := in.Specs.(easyjson.Marshaler); ok {
 		m.MarshalEasyJSON(out)
 	} else if m, ok := in.Specs.(json.Marshaler); ok {
@@ -357,23 +356,23 @@ func easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch2(out *jwrit
 // MarshalJSON supports json.Marshaler interface
 func (v agentGearSpecs) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch2(&w, v)
+	easyjson69d6c65dEncodeGithubComBytearenaCoreGameDeathmatch2(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v agentGearSpecs) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson69d6c65dEncodeGithubComBytearenaBytearenaGameDeathmatch2(w, v)
+	easyjson69d6c65dEncodeGithubComBytearenaCoreGameDeathmatch2(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *agentGearSpecs) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch2(&r, v)
+	easyjson69d6c65dDecodeGithubComBytearenaCoreGameDeathmatch2(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *agentGearSpecs) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson69d6c65dDecodeGithubComBytearenaBytearenaGameDeathmatch2(l, v)
+	easyjson69d6c65dDecodeGithubComBytearenaCoreGameDeathmatch2(l, v)
 }
