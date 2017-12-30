@@ -42,6 +42,11 @@ func NewCommServer(address string) *CommServer {
 
 func (s *CommServer) Send(message []byte, conn net.Conn) error {
 
+	s.Log(EventRawComm{
+		Buffer: message,
+		From:   "server",
+	})
+
 	_, err := conn.Write(message)
 	if err != nil {
 		return err
@@ -119,7 +124,11 @@ func (s *CommServer) Listen(dispatcher CommDispatcherInterface) error {
 
 							// Dump traffic
 							bufnl := append(buf, '\n')
-							s.Log(EventRawComm{bufnl})
+
+							s.Log(EventRawComm{
+								Buffer: bufnl,
+								From:   "agent",
+							})
 
 							// Unmarshal message (unwrapping in an AgentMessage structure)
 							var msg types.AgentMessage

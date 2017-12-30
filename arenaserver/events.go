@@ -9,4 +9,7 @@ type EventDebug struct{ Value string }
 type EventWarn struct{ Err error }
 type EventAgentLog struct{ Value string }
 type EventOrchestratorLog struct{ Value string }
-type EventRawComm struct{ Value []byte }
+type EventRawComm struct {
+	Value []byte
+	From  string
+}
