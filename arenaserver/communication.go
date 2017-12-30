@@ -46,7 +46,10 @@ func (server *Server) listen() chan interface{} {
 					server.Log(EventError{t.Err})
 
 				case comm.EventRawComm:
-					server.Log(EventRawComm{t.Buffer})
+					server.Log(EventRawComm{
+						Value: t.Buffer,
+						From:  t.From,
+					})
 
 				// An agent has probaly been disconnected
 				// We need to remove it from our state

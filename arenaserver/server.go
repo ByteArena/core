@@ -69,6 +69,8 @@ type Server struct {
 	gameStartTime *time.Time
 	gameOver      bool
 
+	isDebug bool
+
 	events chan interface{}
 }
 
@@ -80,6 +82,7 @@ func NewServer(
 	arenaServerUUID string,
 	mqClient mq.ClientInterface,
 	gameDuration *time.Duration,
+	isDebug bool,
 ) *Server {
 
 	gamehost := host
@@ -136,6 +139,8 @@ func NewServer(
 		gameOver:      false,
 
 		events: make(chan interface{}, LOG_ENTRY_BUFFER),
+
+		isDebug: isDebug,
 	}
 
 	return s
@@ -219,8 +224,8 @@ func (s Server) GetTicksPerSecond() int {
 }
 
 func (server *Server) onAgentsReady() {
-	server.Log(EventLog{"Agents are ready; starting in 1 second"})
-	time.Sleep(time.Duration(time.Second * 1))
+	server.Log(EventLog{"Agents are ready; starting in 100 ms"})
+	time.Sleep(time.Duration(time.Millisecond * 100))
 
 	server.startTicking()
 }
@@ -291,8 +296,7 @@ func (server *Server) doTick() {
 	turn := int(server.currentturn) // starts at 0
 	atomic.AddUint32(&server.currentturn, 1)
 
-	dolog := (turn % server.tickspersec) == 0
-	//dolog := true
+	dolog := (turn%server.tickspersec) == 0 || server.isDebug
 
 	///////////////////////////////////////////////////////////////////////////
 	// Updating Game
