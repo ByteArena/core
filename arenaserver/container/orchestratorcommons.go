@@ -31,7 +31,7 @@ func normalizeDockerRef(dockerimage string) (string, error) {
 }
 
 func CommonCreateAgentContainer(orch types.ContainerOrchestrator, agentid uuid.UUID, host string, port int, dockerimage string) (*types.AgentContainer, error) {
-	containerUnixUser := utils.GetenvOrDefault("CONTAINER_UNIX_USER", "root")
+	containerUnixUser := utils.GetenvOrDefault("CONTAINER_UNIX_USER", "nobody")
 
 	normalizedDockerimage, err := normalizeDockerRef(dockerimage)
 
