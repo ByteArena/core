@@ -3,6 +3,7 @@ package arenaserver
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -52,6 +53,9 @@ type Server struct {
 	agentproxiesmutex      *sync.Mutex
 	agentproxieshandshakes map[uuid.UUID]struct{}
 	agentimages            map[uuid.UUID]string
+	agentcontainers        map[uuid.UUID]*types.AgentContainer
+
+	paused bool
 
 	pendingmutations []types.AgentMutationBatch
 	mutationsmutex   *sync.Mutex
@@ -121,6 +125,7 @@ func NewServer(
 		agentproxiesmutex:      &sync.Mutex{},
 		agentproxieshandshakes: make(map[uuid.UUID]struct{}),
 		agentimages:            make(map[uuid.UUID]string),
+		agentcontainers:        make(map[uuid.UUID]*types.AgentContainer),
 
 		pendingmutations: make([]types.AgentMutationBatch, 0),
 		mutationsmutex:   &sync.Mutex{},
@@ -136,6 +141,7 @@ func NewServer(
 		gameDuration:  gameDuration,
 		gameStartTime: nil,
 		gameOver:      false,
+		paused:        false,
 
 		events: make(chan interface{}, LOG_ENTRY_BUFFER),
 
@@ -179,6 +185,14 @@ func (server *Server) Start() (chan interface{}, error) {
 	})
 
 	return block, nil
+}
+
+func (server *Server) Pause() {
+	server.paused = true
+}
+
+func (server *Server) Unpause() {
+	server.paused = false
 }
 
 func (server *Server) Stop() {
@@ -248,11 +262,17 @@ func (server *Server) startTicking() {
 		for {
 			<-ticker
 
-			if server.gameOver {
-				return
-			}
+			if !server.paused {
 
-			server.doTick()
+				if server.gameOver {
+					return
+				}
+
+				server.doTick()
+			} else {
+				log.Println("paused")
+
+			}
 		}
 	}()
 
