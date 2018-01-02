@@ -24,7 +24,6 @@ import (
 )
 
 const (
-	POURCENT_LEFT_BEFORE_QUIT    = 50 // %
 	CLOSE_CONNECTION_BEFORE_KILL = 1 * time.Second
 	LOG_ENTRY_BUFFER             = 100
 )

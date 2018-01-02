@@ -56,7 +56,6 @@ func (server *Server) listen() chan interface{} {
 				case comm.EventConnDisconnected:
 					server.clearAgentConn(t.Conn)
 					server.Log(EventWarn{t.Err})
-					server.ensureEnoughAgentsAreInGame()
 
 				default:
 					msg := fmt.Sprintf("Unsupported message of type %s", reflect.TypeOf(msg))
@@ -77,22 +76,6 @@ func (server *Server) listen() chan interface{} {
 	return block
 }
 
-func (server *Server) ensureEnoughAgentsAreInGame() {
-	if server.nbhandshaked == 0 {
-		server.Log(EventDebug{"Stopping because not enough agents are left"})
-		server.Stop()
-		return
-	}
-
-	left := server.nbhandshaked - len(server.agentproxies)
-	pourcentLeft := left * 100 / server.nbhandshaked
-
-	if pourcentLeft > POURCENT_LEFT_BEFORE_QUIT {
-		server.Log(EventDebug{"Stopping because not enough agents are left"})
-		server.Stop()
-	}
-}
-
 func (server *Server) clearAgentConn(conn net.Conn) {
 	server.agentproxiesmutex.Lock()
 
@@ -111,7 +94,6 @@ func (server *Server) clearAgentConn(conn net.Conn) {
 }
 
 func (server *Server) clearAgentById(k uuid.UUID) {
-	server.agentproxiesmutex.Lock()
 
 	// Remove agent from our state
 	delete(server.agentproxies, k)
@@ -119,8 +101,6 @@ func (server *Server) clearAgentById(k uuid.UUID) {
 	delete(server.agentproxieshandshakes, k)
 
 	server.Log(EventDebug{fmt.Sprintf("Removing %s from state", k.String())})
-
-	server.agentproxiesmutex.Unlock()
 }
 
 /* <implementing types.AgentCommunicatorInterface> */

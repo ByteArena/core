@@ -108,7 +108,6 @@ func (s *Server) startAgentContainers() error {
 				s.containerorchestrator.RemoveContainer(container)
 
 				s.clearAgentById(k)
-				s.ensureEnoughAgentsAreInGame()
 			case <-err:
 				panic(err)
 			}
