@@ -3,7 +3,6 @@ package arenaserver
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -21,6 +20,7 @@ import (
 	"github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/types/mapcontainer"
 	"github.com/bytearena/core/common/utils"
+	"github.com/bytearena/core/common/utils/vector"
 	commongame "github.com/bytearena/core/game/common"
 )
 
@@ -54,8 +54,7 @@ type Server struct {
 	agentproxieshandshakes map[uuid.UUID]struct{}
 	agentimages            map[uuid.UUID]string
 	agentcontainers        map[uuid.UUID]*types.AgentContainer
-
-	paused bool
+	agentspawnedvector     map[uuid.UUID]*vector.Vector2
 
 	pendingmutations []types.AgentMutationBatch
 	mutationsmutex   *sync.Mutex
@@ -126,6 +125,7 @@ func NewServer(
 		agentproxieshandshakes: make(map[uuid.UUID]struct{}),
 		agentimages:            make(map[uuid.UUID]string),
 		agentcontainers:        make(map[uuid.UUID]*types.AgentContainer),
+		agentspawnedvector:     make(map[uuid.UUID]*vector.Vector2),
 
 		pendingmutations: make([]types.AgentMutationBatch, 0),
 		mutationsmutex:   &sync.Mutex{},
@@ -141,7 +141,6 @@ func NewServer(
 		gameDuration:  gameDuration,
 		gameStartTime: nil,
 		gameOver:      false,
-		paused:        false,
 
 		events: make(chan interface{}, LOG_ENTRY_BUFFER),
 
@@ -185,14 +184,6 @@ func (server *Server) Start() (chan interface{}, error) {
 	})
 
 	return block, nil
-}
-
-func (server *Server) Pause() {
-	server.paused = true
-}
-
-func (server *Server) Unpause() {
-	server.paused = false
 }
 
 func (server *Server) Stop() {
@@ -262,17 +253,11 @@ func (server *Server) startTicking() {
 		for {
 			<-ticker
 
-			if !server.paused {
-
-				if server.gameOver {
-					return
-				}
-
-				server.doTick()
-			} else {
-				log.Println("paused")
-
+			if server.gameOver {
+				return
 			}
+
+			server.doTick()
 		}
 	}()
 

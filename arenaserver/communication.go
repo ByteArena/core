@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"reflect"
 	"strconv"
@@ -105,6 +106,12 @@ func (server *Server) clearAgentById(k uuid.UUID) {
 
 /* <implementing types.AgentCommunicatorInterface> */
 func (s *Server) NetSend(message []byte, conn net.Conn) error {
+	if conn == nil {
+		// FIXME(sven): ideally fix this
+		log.Println("incorrect state, conn to agent is null")
+		return nil
+	}
+
 	return s.commserver.Send(message, conn)
 }
 
@@ -121,8 +128,11 @@ func (server *Server) ImplementsCommDispatcherInterface() {}
 func (server *Server) DispatchAgentMessage(msg types.AgentMessage) error {
 
 	agentproxy, err := server.getAgentProxy(msg.GetAgentId().String())
+
 	if err != nil {
-		return errors.New("DispatchAgentMessage: agentid does not match any known agent in received agent message !;" + msg.GetAgentId().String())
+		return bettererrors.
+			New("DispatchAgentMessage: agentid does not match any known agent in received agent message").
+			SetContext("agentid", msg.GetAgentId().String())
 	}
 
 	// proto := msg.GetEmitterConn().LocalAddr().Network()

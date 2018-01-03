@@ -177,6 +177,11 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 		AddComponent(deathmatch.mailboxComponent, &Mailbox{})
 }
 
+func (deathmatch *DeathmatchGame) RemoveEntityAgent(agent *types.Agent) {
+	qr := deathmatch.getEntity(agent.EntityID)
+	deathmatch.manager.DisposeEntity(qr)
+}
+
 func agentCollisionScript(game *DeathmatchGame, entityID ecs.EntityID, otherEntityID ecs.EntityID, collidableAspect *Collidable, otherCollidableAspectB *Collidable, point vector.Vector2) {
 	entityResult := game.getEntity(entityID, game.physicalBodyComponent)
 	if entityResult == nil {

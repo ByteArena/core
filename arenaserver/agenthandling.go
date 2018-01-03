@@ -15,33 +15,36 @@ import (
 	bettererrors "github.com/xtuc/better-errors"
 )
 
-func (s *Server) RegisterAgent(agent *types.Agent) {
+func (s *Server) RegisterAgent(agent *types.Agent, spawningVector *vector.Vector2) {
 	agentimage := agent.Manifest.Id
 
 	///////////////////////////////////////////////////////////////////////////
 	// Building the agent entity (gameplay related aspects of the agent)
 	///////////////////////////////////////////////////////////////////////////
 
-	arenamap := s.GetGameDescription().GetMapContainer()
-	agentSpawnPointIndex := len(s.agentproxies)
+	if spawningVector == nil {
 
-	if agentSpawnPointIndex >= len(arenamap.Data.Starts) {
-		berror := bettererrors.
-			New("Cannot spawn agent").
-			SetContext("image", agent.Manifest.Id).
-			SetContext("number of spawns", strconv.Itoa(len(arenamap.Data.Starts))).
-			With(bettererrors.New("No starting point left"))
+		arenamap := s.GetGameDescription().GetMapContainer()
+		agentSpawnPointIndex := len(s.agentproxies)
 
-		s.Log(EventError{berror})
-		return
+		if agentSpawnPointIndex >= len(arenamap.Data.Starts) {
+			berror := bettererrors.
+				New("Cannot spawn agent").
+				SetContext("image", agent.Manifest.Id).
+				SetContext("number of spawns", strconv.Itoa(len(arenamap.Data.Starts))).
+				With(bettererrors.New("No starting point left"))
+
+			s.Log(EventError{berror})
+			return
+		}
+
+		agentSpawningPos := arenamap.Data.Starts[agentSpawnPointIndex]
+
+		vector := vector.MakeVector2(agentSpawningPos.Point.GetX(), agentSpawningPos.Point.GetY())
+		spawningVector = &vector
 	}
 
-	agentSpawningPos := arenamap.Data.Starts[agentSpawnPointIndex]
-
-	agententity := s.game.NewEntityAgent(
-		agent,
-		vector.MakeVector2(agentSpawningPos.Point.GetX(), agentSpawningPos.Point.GetY()),
-	)
+	agententity := s.game.NewEntityAgent(agent, *spawningVector)
 
 	///////////////////////////////////////////////////////////////////////////
 	// Building the agent proxy (concrete link with container and communication pipe)
@@ -55,9 +58,13 @@ func (s *Server) RegisterAgent(agent *types.Agent) {
 
 	agent.EntityID = agententity.GetID()
 	agent.UUID = agentproxy.GetProxyUUID()
+
+	// Keep last spawning point in case we will respawn it (via ReloadAgent)
+	s.agentspawnedvector[agentproxy.GetProxyUUID()] = spawningVector
 }
 
 func (s *Server) ReloadAgent(agent *types.Agent) error {
+
 	container, hasContainer := s.agentcontainers[agent.UUID]
 
 	if !hasContainer {
@@ -70,6 +77,8 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 	proxy, _ := s.agentproxies[agent.UUID]
 
 	if netAgent, ok := proxy.(arenaserveragent.AgentProxyNetworkInterface); ok {
+
+		// Remove the connection and the entity from our states
 		s.clearAgentConn(netAgent.GetConn())
 	}
 
@@ -77,8 +86,12 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 	s.containerorchestrator.TearDown(container)
 	s.containerorchestrator.RemoveContainer(container)
 
+	// Remove from ecs
+	s.game.RemoveEntityAgent(agent)
+
 	// Re-register it
-	s.RegisterAgent(agent)
+	lastSpawnedVector, _ := s.agentspawnedvector[agent.UUID]
+	s.RegisterAgent(agent, lastSpawnedVector)
 
 	// Re-start it
 	newProxy, _ := s.agentproxies[agent.UUID]
@@ -90,6 +103,9 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 			SetContext("agent", agent.Manifest.Id).
 			With(err)
 	}
+
+	// Wait for handshake
+	s.nbhandshaked--
 
 	return nil
 }
