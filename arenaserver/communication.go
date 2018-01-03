@@ -130,6 +130,12 @@ func (server *Server) DispatchAgentMessage(msg types.AgentMessage) error {
 	agentproxy, err := server.getAgentProxy(msg.GetAgentId().String())
 
 	if err != nil {
+
+		// Ignore if game wasn't running, typically when hotreloading an agent
+		if server.gameIsRunning == false {
+			return nil
+		}
+
 		return bettererrors.
 			New("DispatchAgentMessage: agentid does not match any known agent in received agent message").
 			SetContext("agentid", msg.GetAgentId().String())

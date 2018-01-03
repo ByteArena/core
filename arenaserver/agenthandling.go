@@ -64,6 +64,12 @@ func (s *Server) RegisterAgent(agent *types.Agent, spawningVector *vector.Vector
 }
 
 func (s *Server) ReloadAgent(agent *types.Agent) error {
+	// Ignore future communication error if any
+	s.gameIsRunning = false
+
+	defer func() {
+		s.gameIsRunning = true
+	}()
 
 	container, hasContainer := s.agentcontainers[agent.UUID]
 
@@ -72,6 +78,9 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 			New("Container not found").
 			SetContext("agent", agent.Manifest.Id)
 	}
+
+	// Remove from ecs
+	s.game.RemoveEntityAgent(agent)
 
 	// Close connection
 	proxy, _ := s.agentproxies[agent.UUID]
@@ -86,8 +95,13 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 	s.containerorchestrator.TearDown(container)
 	s.containerorchestrator.RemoveContainer(container)
 
-	// Remove from ecs
-	s.game.RemoveEntityAgent(agent)
+	// Wait until the containers exists to continue the process
+	exist, waiterr := s.containerorchestrator.Wait(container)
+
+	select {
+	case <-exist: // ok
+	case <-waiterr: // ok, probably already removed
+	}
 
 	// Re-register it
 	lastSpawnedVector, _ := s.agentspawnedvector[agent.UUID]
