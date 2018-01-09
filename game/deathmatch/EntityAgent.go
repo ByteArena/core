@@ -13,7 +13,7 @@ import (
 	"github.com/bytearena/core/game/deathmatch/events"
 )
 
-func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPosition vector.Vector2) *ecs.Entity {
+func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPosition vector.Vector2) *ecs.Entity { // spawnPosition in physical space; TODO: fix this, should be in agent space
 
 	agentEntity := deathmatch.manager.NewEntity()
 
@@ -164,7 +164,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 				lifecycleAspect := qr.Components[deathmatch.lifecycleComponent].(*Lifecycle)
 				healthAspect := qr.Components[deathmatch.healthComponent].(*Health)
 
-				physicalAspect.SetPosition(vector.MakeVector2(spawnPoint.GetX(), spawnPoint.GetY()))
+				physicalAspect.SetPositionInPhysicalScale(vector.MakeVector2(spawnPoint.GetX(), spawnPoint.GetY()))
 				lifecycleAspect.locked = false
 				healthAspect.Restore()
 
