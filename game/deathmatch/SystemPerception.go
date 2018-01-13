@@ -2,6 +2,7 @@ package deathmatch
 
 import (
 	"math"
+	"strconv"
 	"sync"
 
 	"github.com/bytearena/box2d"
@@ -254,11 +255,13 @@ func computeAgentVision(game *DeathmatchGame, entity *ecs.Entity, physicalAspect
 				centervec = centervec.SetAngle(centervec.Angle() - agentOrientation)
 
 				visionitem := agentPerceptionVisionItem{
-					NearEdge: nearEdge.Clone().SetAngle(nearEdge.Angle() - agentOrientation), // perpendicular to relative position vector, left side
-					Center:   centervec,
-					FarEdge:  farEdge.Clone().SetAngle(farEdge.Angle() - agentOrientation), // perpendicular to relative position vector, right side
-					Velocity: otherVelocity.Clone().SetAngle(otherVelocity.Angle() - agentOrientation),
-					Tag:      visionType,
+					NearEdge:   nearEdge.Clone().SetAngle(nearEdge.Angle() - agentOrientation), // perpendicular to relative position vector, left side
+					Center:     centervec,
+					FarEdge:    farEdge.Clone().SetAngle(farEdge.Angle() - agentOrientation), // perpendicular to relative position vector, right side
+					Velocity:   otherVelocity.Clone().SetAngle(otherVelocity.Angle() - agentOrientation),
+					Tag:        visionType,
+					EntityID:   bodyDescriptor.ID,
+					SegmentNum: 0, // only one segment for circular bodies (diameter perpendicular to the viewer)
 				}
 
 				vision = append(vision, visionitem)
@@ -271,21 +274,24 @@ func computeAgentVision(game *DeathmatchGame, entity *ecs.Entity, physicalAspect
 			otherQr := game.getEntity(bodyDescriptor.ID, game.physicalBodyComponent)
 			otherPhysicalAspect := otherQr.Components[game.physicalBodyComponent].(*PhysicalBody)
 
+			segmentNumber := -1
 			fixture := otherPhysicalAspect.body.GetFixtureList()
 			for fixture != nil {
+
+				// Iterating over each segment of the polygon shape
+				segmentNumber++ // starts at 0
 
 				b2edge := fixture.GetShape().(*box2d.B2EdgeShape)
 				fixture = fixture.M_next
 
-				edges := make([]vector.Vector2, 0)
-
 				pointA := vector.FromB2Vec2(b2edge.M_vertex1).Transform(game.physicalToAgentSpaceTransform)
 				pointB := vector.FromB2Vec2(b2edge.M_vertex2).Transform(game.physicalToAgentSpaceTransform)
 
-				segmentAABB := vector.GetAABBForPointList(pointA, pointB)
-				if !segmentAABB.Overlaps(entityAABB) {
+				if !vector.GetAABBForPointList(pointA, pointB).Overlaps(entityAABB) {
 					continue
 				}
+
+				edges := make([]vector.Vector2, 0)
 
 				relvecA := pointA.Sub(agentPosition)
 				relvecB := pointB.Sub(agentPosition)
@@ -397,11 +403,13 @@ func computeAgentVision(game *DeathmatchGame, entity *ecs.Entity, physicalAspect
 					}
 
 					obstacleperception := agentPerceptionVisionItem{
-						NearEdge: nearEdge,
-						Center:   relCenterAgentAligned,
-						FarEdge:  farEdge,
-						Velocity: vector.MakeNullVector2(),
-						Tag:      agentPerceptionVisionItemTag.Obstacle,
+						NearEdge:   nearEdge,
+						Center:     relCenterAgentAligned,
+						FarEdge:    farEdge,
+						Velocity:   vector.MakeNullVector2(),
+						Tag:        agentPerceptionVisionItemTag.Obstacle,
+						EntityID:   bodyDescriptor.ID,
+						SegmentNum: segmentNumber,
 					}
 
 					vision = append(vision, obstacleperception)
@@ -456,22 +464,197 @@ func processOcclusions(vision []agentPerceptionVisionItem, agentPosition vector.
 		breakableSegments,
 	)
 
-	//brokenSegments := breakintersections.BreakIntersections(breakableSegments)
+	// lenbefore := len(brokenSegments)
 
-	realVision := make([]agentPerceptionVisionItem, len(brokenSegments))
+	/*
 
-	for i, brokenSegment := range brokenSegments {
+		A-----B C-----D
+
+		* SI: A==B => destruction AB; reloop
+		* SINON:
+			* SI: C==D => destruction CD; reloop
+			* SINON:
+				* SI A==C => destruction AB; destruction CD; création BD; reloop
+				* SINON:
+					* SI: A==D => destruction AB; destruction CD; création BC; reloop
+					* SINON:
+						* SI B==C => destruction AB; destruction CD; création AD; reloop
+						* SINON:
+							* SI B==D => destruction AB; destruction CD; création AC; reloop
+
+	*/
+
+	// Sorting the broken segments by entity+segmentnum
+	sortedSegments := map[string]([]*visibility2d.ObstacleSegment){}
+	for i, _ := range brokenSegments {
+
+		brokensegment := &brokenSegments[i]
+
+		visionItem := brokensegment.UserData.(agentPerceptionVisionItem)
+		segmentHash := strconv.Itoa(int(visionItem.EntityID)) + ":" + strconv.Itoa(visionItem.SegmentNum)
+
+		var collection []*visibility2d.ObstacleSegment
+		var found bool
+		if collection, found = sortedSegments[segmentHash]; !found {
+			collection = make([]*visibility2d.ObstacleSegment, 0)
+		}
+
+		collection = append(collection, brokensegment)
+		sortedSegments[segmentHash] = collection
+	}
+
+	precision := 0.001
+
+	finalSegments := make([]*visibility2d.ObstacleSegment, 0)
+
+	for _, collection := range sortedSegments {
+		mustIterate := true
+
+		for mustIterate {
+
+			mustIterate = false
+			for i, _ := range collection {
+
+				abIndex := i
+				cdIndex := i + 1
+
+				ab := collection[abIndex]
+				var cd *visibility2d.ObstacleSegment
+
+				if cdIndex < len(collection) {
+					cd = collection[cdIndex]
+				}
+
+				a := vector.Vector2(ab.Points[0])
+				b := vector.Vector2(ab.Points[1])
+
+				if a.EqualsWithPrecision(b, precision) {
+					// SI: A==B => destruction AB; reloop
+					collection = append(collection[:abIndex], collection[abIndex+1:]...)
+					mustIterate = true
+					break
+				} else {
+					if cd == nil {
+						break
+					}
+
+					c := vector.Vector2(cd.Points[0])
+					d := vector.Vector2(cd.Points[1])
+
+					if c.EqualsWithPrecision(d, precision) {
+						// destruction CD; reloop
+						collection = append(collection[:cdIndex], collection[cdIndex+1:]...)
+						mustIterate = true
+						break
+					} else {
+
+						if a.EqualsWithPrecision(c, precision) {
+							// destruction AB; destruction CD; création BD; reloop
+							collection = append(collection[:cdIndex], collection[cdIndex+1:]...)
+							collection = append(collection[:abIndex], collection[abIndex+1:]...)
+							collection = append(collection, &visibility2d.ObstacleSegment{
+								Points: [2][2]float64{
+									b,
+									d,
+								},
+								UserData: ab.UserData,
+							})
+
+							mustIterate = true
+							break
+						} else {
+							if a.EqualsWithPrecision(d, precision) {
+								// destruction AB; destruction CD; création BC; reloop
+
+								collection = append(collection[:cdIndex], collection[cdIndex+1:]...)
+								collection = append(collection[:abIndex], collection[abIndex+1:]...)
+								collection = append(collection, &visibility2d.ObstacleSegment{
+									Points: [2][2]float64{
+										b,
+										c,
+									},
+									UserData: ab.UserData,
+								})
+
+								mustIterate = true
+								break
+							} else {
+								if b.EqualsWithPrecision(c, precision) {
+									// destruction AB; destruction CD; création AD; reloop
+
+									collection = append(collection[:cdIndex], collection[cdIndex+1:]...)
+									collection = append(collection[:abIndex], collection[abIndex+1:]...)
+									collection = append(collection, &visibility2d.ObstacleSegment{
+										Points: [2][2]float64{
+											a,
+											d,
+										},
+										UserData: ab.UserData,
+									})
+
+									mustIterate = true
+									break
+								} else {
+									if b.EqualsWithPrecision(d, precision) {
+										// destruction AB; destruction CD; création AC; reloop
+
+										collection = append(collection[:cdIndex], collection[cdIndex+1:]...)
+										collection = append(collection[:abIndex], collection[abIndex+1:]...)
+										collection = append(collection, &visibility2d.ObstacleSegment{
+											Points: [2][2]float64{
+												a,
+												c,
+											},
+											UserData: ab.UserData,
+										})
+
+										mustIterate = true
+										break
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		finalSegments = append(finalSegments, collection...)
+	}
+
+	//fmt.Println("FROM", lenbefore, "TO", len(finalSegments))
+
+	realVision := make([]agentPerceptionVisionItem, len(finalSegments))
+
+	//fmt.Println("--------------------------------------------------")
+	for i, brokenSegment := range finalSegments {
 
 		obs := vector.MakeSegment2(brokenSegment.Points[0], brokenSegment.Points[1])
 
-		data := brokenSegment.UserData.(agentPerceptionVisionItem)
-		realVision[i] = agentPerceptionVisionItem{
-			Tag:      data.Tag,
-			NearEdge: brokenSegment.Points[0],
-			FarEdge:  brokenSegment.Points[1],
-			Center:   obs.Center(),
-			Velocity: data.Velocity,
+		a := vector.Vector2(brokenSegment.Points[0])
+		b := vector.Vector2(brokenSegment.Points[1])
+
+		var nearEdge, farEdge vector.Vector2
+
+		if a.MagSq() <= b.MagSq() {
+			nearEdge, farEdge = a, b
+		} else {
+			nearEdge, farEdge = b, a
 		}
+
+		data := brokenSegment.UserData.(agentPerceptionVisionItem)
+
+		realVision[i] = agentPerceptionVisionItem{
+			Tag:        data.Tag,
+			NearEdge:   nearEdge,
+			FarEdge:    farEdge,
+			Center:     obs.Center(),
+			Velocity:   data.Velocity,
+			EntityID:   data.EntityID,
+			SegmentNum: data.SegmentNum,
+		}
+
+		//fmt.Println(realVision[i].EntityID, realVision[i].SegmentNum, realVision[i].NearEdge.String(), realVision[i].FarEdge.String())
 	}
 
 	return realVision

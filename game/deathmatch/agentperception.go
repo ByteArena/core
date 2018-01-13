@@ -1,6 +1,9 @@
 package deathmatch
 
-import "github.com/bytearena/core/common/utils/vector"
+import (
+	"github.com/bytearena/core/common/utils/vector"
+	"github.com/bytearena/ecs"
+)
 
 type agentPerception struct {
 	Score int `json:"score"`
@@ -25,11 +28,13 @@ var agentPerceptionVisionItemTag = struct {
 }
 
 type agentPerceptionVisionItem struct {
-	Tag      string         `json:"tag"`
-	NearEdge vector.Vector2 `json:"nearedge"`
-	Center   vector.Vector2 `json:"center"`
-	FarEdge  vector.Vector2 `json:"faredge"`
-	Velocity vector.Vector2 `json:"velocity"`
+	Tag        string         `json:"tag"`
+	NearEdge   vector.Vector2 `json:"nearedge"`
+	Center     vector.Vector2 `json:"center"`
+	FarEdge    vector.Vector2 `json:"faredge"`
+	Velocity   vector.Vector2 `json:"velocity"`
+	EntityID   ecs.EntityID   `json:"-"`
+	SegmentNum int            `json:"-"`
 }
 
 type mailboxMessagePerceptionWrapper struct {
