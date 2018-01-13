@@ -12,7 +12,6 @@ import (
 
 	"github.com/bytearena/core/common/types"
 	commontypes "github.com/bytearena/core/common/types"
-	"github.com/bytearena/core/game/common"
 	"github.com/bytearena/core/game/deathmatch/events"
 	"github.com/bytearena/core/game/deathmatch/mailboxmessages"
 )
@@ -235,12 +234,6 @@ func (deathmatch DeathmatchGame) getEntity(id ecs.EntityID, tagelements ...inter
 // <GameInterface>
 
 func (deathmatch *DeathmatchGame) ImplementsGameInterface() {}
-
-func (deathmatch *DeathmatchGame) Subscribe(event string, cbk func(data interface{})) common.GameEventSubscription {
-	return common.GameEventSubscription(0)
-}
-
-func (deathmatch *DeathmatchGame) Unsubscribe(subscription common.GameEventSubscription) {}
 
 func (deathmatch *DeathmatchGame) Step(ticknum int, dt float64, mutations []types.AgentMutationBatch) {
 
