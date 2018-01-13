@@ -6,15 +6,18 @@ import (
 
 type MapContainer struct {
 	Meta struct {
-		Readme         string `json:"readme"`
-		Kind           string `json:"kind"`
-		MaxContestants int    `json:"maxcontestants"`
-		Date           string `json:"date"`
+		Readme         string                 `json:"readme"`
+		MaxContestants int                    `json:"maxcontestants"`
+		Kind           string                 `json:"kind"`
+		Variant        string                 `json:"variant,omitempty"`
+		Options        map[string]interface{} `json:"options,omitempty"`
 	} `json:"meta"`
 	Data struct {
-		Grounds   []MapGround         `json:"grounds"`
-		Starts    []MapStart          `json:"starts"`
-		Obstacles []MapObstacleObject `json:"obstacles"`
+		Grounds             []MapPolygonObject `json:"grounds"`
+		Starts              []MapPointObject   `json:"starts"`
+		Obstacles           []MapPolygonObject `json:"obstacles"`
+		OtherPointObjects   []MapPointObject   `json:"otherpoints"`
+		OtherPolygonObjects []MapPolygonObject `json:"otherpolygons"`
 	} `json:"data"`
 }
 
@@ -35,12 +38,6 @@ func (m MapPoint) GetY() float64 {
 	return m[1]
 }
 
-type MapGround struct {
-	Id      string     `json:"id"`
-	Name    string     `json:"name"`
-	Polygon MapPolygon `json:"polygon"`
-}
-
 type MapPolygon struct {
 	Points []MapPoint `json:"points"`
 }
@@ -54,14 +51,16 @@ func (a *MapPolygon) ToVector2Array() []vector.Vector2 {
 	return res
 }
 
-type MapStart struct {
+type MapPointObject struct {
 	Id    string   `json:"id"`
 	Name  string   `json:"name"`
 	Point MapPoint `json:"point"`
+	Tags  []string `json:"tags,omitempty"`
 }
 
-type MapObstacleObject struct {
+type MapPolygonObject struct {
 	Id      string     `json:"id"`
 	Name    string     `json:"name"`
 	Polygon MapPolygon `json:"polygon"`
+	Tags    []string   `json:"tags,omitempty"`
 }
