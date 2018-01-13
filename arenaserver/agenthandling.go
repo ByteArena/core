@@ -45,19 +45,19 @@ func (s *Server) RegisterAgent(agent *types.Agent, spawningVector *vector.Vector
 		spawningVector = &vector
 	}
 
-	agententity := s.game.NewEntityAgent(agent, *spawningVector)
+	agententityid := s.game.NewEntityAgent(agent, *spawningVector)
 
 	///////////////////////////////////////////////////////////////////////////
 	// Building the agent proxy (concrete link with container and communication pipe)
 	///////////////////////////////////////////////////////////////////////////
 
 	agentproxy := arenaserveragent.MakeAgentProxyNetwork()
-	agentproxy.SetEntityId(agententity.GetID())
+	agentproxy.SetEntityId(agententityid)
 
 	s.setAgentProxy(agentproxy)
 	s.agentimages[agentproxy.GetProxyUUID()] = agentimage
 
-	agent.EntityID = agententity.GetID()
+	agent.EntityID = agententityid
 	agent.UUID = agentproxy.GetProxyUUID()
 
 	// Keep last spawning point in case we will respawn it (via ReloadAgent)
@@ -80,8 +80,9 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 			SetContext("agent", agent.Manifest.Id)
 	}
 
-	// Remove from ecs
-	s.game.RemoveEntityAgent(agent)
+	s.gameStepMutex.Lock()
+	s.game.RemoveEntityAgent(agent) // Remove from ecs
+	s.gameStepMutex.Unlock()
 
 	// Close connection
 	proxy, _ := s.agentproxies[agent.UUID]
@@ -106,7 +107,10 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 
 	// Re-register it
 	lastSpawnedVector, _ := s.agentspawnedvector[agent.UUID]
+
+	s.gameStepMutex.Lock()
 	s.RegisterAgent(agent, lastSpawnedVector)
+	s.gameStepMutex.Unlock()
 
 	// Re-start it
 	newProxy, _ := s.agentproxies[agent.UUID]
@@ -118,9 +122,6 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 			SetContext("agent", agent.Manifest.Id).
 			With(err)
 	}
-
-	// Wait for handshake
-	s.nbhandshaked--
 
 	return nil
 }

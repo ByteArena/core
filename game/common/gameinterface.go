@@ -14,7 +14,7 @@ type GameInterface interface {
 	Subscribe(event string, cbk func(data interface{})) GameEventSubscription
 	Unsubscribe(subscription GameEventSubscription)
 	Step(tickturn int, dt float64, mutations []types.AgentMutationBatch)
-	NewEntityAgent(contestant *types.Agent, pos vector.Vector2) *ecs.Entity
+	NewEntityAgent(contestant *types.Agent, pos vector.Vector2) ecs.EntityID
 	RemoveEntityAgent(contestant *types.Agent)
 
 	GetAgentPerception(entityid ecs.EntityID) []byte

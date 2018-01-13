@@ -74,6 +74,8 @@ type Server struct {
 	isDebug bool
 
 	events chan interface{}
+
+	gameStepMutex *sync.Mutex
 }
 
 func NewServer(
@@ -112,6 +114,8 @@ func NewServer(
 
 		tearDownCallbacks:      make([]types.TearDownCallback, 0),
 		tearDownCallbacksMutex: &sync.Mutex{},
+
+		gameStepMutex: &sync.Mutex{},
 
 		containerorchestrator: orch,
 		commserver:            nil, // initialized in Listen()
@@ -294,6 +298,8 @@ func (server *Server) doTick() {
 	//watch := utils.MakeStopwatch("doTick")
 	//watch.Start("global")
 
+	server.gameStepMutex.Lock()
+
 	begin := time.Now()
 
 	turn := int(server.currentturn) // starts at 0
@@ -317,10 +323,11 @@ func (server *Server) doTick() {
 	for _, agentproxy := range server.agentproxies {
 		go func(server *Server, agentproxy agent.AgentProxyInterface, arenamap *mapcontainer.MapContainer) {
 
-			err := agentproxy.SetPerception(
-				server.GetGame().GetAgentPerception(agentproxy.GetEntityId()),
-				server,
-			)
+			agentPerception := server.
+				GetGame().
+				GetAgentPerception(agentproxy.GetEntityId())
+
+			err := agentproxy.SetPerception(agentPerception, server)
 
 			if err != nil && atomic.LoadInt32(&server.gameIsRunning) == 1 {
 				berror := bettererrors.
@@ -333,6 +340,8 @@ func (server *Server) doTick() {
 
 		}(server, agentproxy, arenamap)
 	}
+
+	server.gameStepMutex.Unlock()
 
 	///////////////////////////////////////////////////////////////////////////
 	// Pushing updated state to viz

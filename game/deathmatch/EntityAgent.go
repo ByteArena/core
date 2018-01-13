@@ -13,8 +13,10 @@ import (
 	"github.com/bytearena/core/game/deathmatch/events"
 )
 
-func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPosition vector.Vector2) *ecs.Entity {
-
+func (deathmatch *DeathmatchGame) NewEntityAgent(
+	agent *types.Agent,
+	spawnPosition vector.Vector2,
+) ecs.EntityID {
 	agentEntity := deathmatch.manager.NewEntity()
 
 	///////////////////////////////////////////////////////////////////////////
@@ -61,10 +63,9 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 	///////////////////////////////////////////////////////////////////////////
 	// Composition de l'agent dans l'ECS
 	///////////////////////////////////////////////////////////////////////////
-
 	tps := deathmatch.gameDescription.GetTps()
 
-	return agentEntity.
+	agentEntity.
 		AddComponent(deathmatch.physicalBodyComponent, &PhysicalBody{
 			body:               body,
 			maxSpeed:           maxSpeed,
@@ -175,9 +176,12 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 			},
 		}).
 		AddComponent(deathmatch.mailboxComponent, &Mailbox{})
+
+	return agentEntity.GetID()
 }
 
 func (deathmatch *DeathmatchGame) RemoveEntityAgent(agent *types.Agent) {
+
 	qr := deathmatch.getEntity(agent.EntityID)
 	deathmatch.manager.DisposeEntity(qr)
 }
