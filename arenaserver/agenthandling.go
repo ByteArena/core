@@ -88,7 +88,7 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 	if netAgent, ok := proxy.(arenaserveragent.AgentProxyNetworkInterface); ok {
 
 		// Remove the connection and the entity from our states
-		s.clearAgentConn(netAgent.GetConn())
+		s.removeAgentConn(netAgent.GetConn())
 	}
 
 	// Stop and remove container
@@ -182,7 +182,9 @@ func (s *Server) startAgentContainer(
 
 			s.containerorchestrator.RemoveContainer(container)
 
-			s.clearAgentById(agentproxy.GetProxyUUID())
+			s.agentproxiesmutex.Lock()
+			s.removeAgent(agentproxy.GetProxyUUID())
+			s.agentproxiesmutex.Unlock()
 		case <-err:
 			panic(err)
 		}

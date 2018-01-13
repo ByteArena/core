@@ -55,7 +55,7 @@ func (server *Server) listen() chan interface{} {
 				// An agent has probaly been disconnected
 				// We need to remove it from our state
 				case comm.EventConnDisconnected:
-					server.clearAgentConn(t.Conn)
+					server.removeAgentConn(t.Conn)
 					server.Log(EventWarn{t.Err})
 
 				default:
@@ -77,31 +77,38 @@ func (server *Server) listen() chan interface{} {
 	return block
 }
 
-func (server *Server) clearAgentConn(conn net.Conn) {
-	server.agentproxiesmutex.Lock()
+func (server *Server) removeAgent(key uuid.UUID) {
+
+	// Remove agent from our state
+	delete(server.agentproxies, key)
+	delete(server.agentimages, key)
+	delete(server.agentproxieshandshakes, key)
+
+	server.Log(EventDebug{fmt.Sprintf("Removing %s from state", key.String())})
+}
+
+func (server *Server) removeAgentConn(conn net.Conn) {
+
+	var pkey *uuid.UUID
 
 	for k, agentproxy := range server.agentproxies {
 		netAgent, ok := agentproxy.(agent.AgentProxyNetworkInterface)
 
 		if ok && netAgent.GetConn() == conn {
-
-			server.clearAgentById(k)
+			pkey = &k
 			break
 		}
 
 	}
 
-	server.agentproxiesmutex.Unlock()
-}
+	if pkey != nil {
+		key := *pkey
 
-func (server *Server) clearAgentById(k uuid.UUID) {
+		server.agentproxiesmutex.Lock()
+		server.removeAgent(key)
+		server.agentproxiesmutex.Unlock()
+	}
 
-	// Remove agent from our state
-	delete(server.agentproxies, k)
-	delete(server.agentimages, k)
-	delete(server.agentproxieshandshakes, k)
-
-	server.Log(EventDebug{fmt.Sprintf("Removing %s from state", k.String())})
 }
 
 /* <implementing types.AgentCommunicatorInterface> */
