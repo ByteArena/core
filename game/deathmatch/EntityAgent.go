@@ -84,6 +84,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(
 		AddComponent(deathmatch.perceptionComponent, &Perception{
 			visionAngle:  visionAngle,
 			visionRadius: visionRadius,
+			perception:   newEmptyAgentPerception(),
 		}).
 		AddComponent(deathmatch.healthComponent, &Health{
 			maxLife: 1000, // Const
