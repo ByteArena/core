@@ -66,7 +66,7 @@ type Server struct {
 	///////////////////////////////////////////////////////////////////////
 
 	game          commongame.GameInterface
-	gameIsRunning bool
+	gameIsRunning int32
 	gameDuration  *time.Duration
 	gameStartTime *time.Time
 	gameOver      bool
@@ -137,7 +137,6 @@ func NewServer(
 		///////////////////////////////////////////////////////////////////////
 
 		game:          game,
-		gameIsRunning: false,
 		gameDuration:  gameDuration,
 		gameStartTime: nil,
 		gameOver:      false,
@@ -187,7 +186,7 @@ func (server *Server) Start() (chan interface{}, error) {
 }
 
 func (server *Server) Stop() {
-	server.gameIsRunning = false
+	atomic.StoreInt32(&server.gameIsRunning, 0)
 
 	server.Log(EventDebug{"TearDown from stop"})
 	server.TearDown()
@@ -236,7 +235,7 @@ func (server *Server) onAgentsReady() {
 
 func (server *Server) startTicking() {
 
-	server.gameIsRunning = true
+	atomic.StoreInt32(&server.gameIsRunning, 1)
 	now := time.Now()
 	server.gameStartTime = &now
 
@@ -323,7 +322,7 @@ func (server *Server) doTick() {
 				server,
 			)
 
-			if err != nil && server.gameIsRunning {
+			if err != nil && atomic.LoadInt32(&server.gameIsRunning) == 1 {
 				berror := bettererrors.
 					New("Failed to send perception").
 					SetContext("agent", agentproxy.GetProxyUUID().String()).

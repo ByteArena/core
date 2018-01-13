@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"sync/atomic"
 
 	"github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/utils/vector"
@@ -65,10 +66,10 @@ func (s *Server) RegisterAgent(agent *types.Agent, spawningVector *vector.Vector
 
 func (s *Server) ReloadAgent(agent *types.Agent) error {
 	// Ignore future communication error if any
-	s.gameIsRunning = false
+	atomic.StoreInt32(&s.gameIsRunning, 0)
 
 	defer func() {
-		s.gameIsRunning = true
+		atomic.StoreInt32(&s.gameIsRunning, 1)
 	}()
 
 	container, hasContainer := s.agentcontainers[agent.UUID]

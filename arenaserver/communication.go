@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	notify "github.com/bitly/go-notify"
 	"github.com/bytearena/core/arenaserver/agent"
@@ -139,7 +140,7 @@ func (server *Server) DispatchAgentMessage(msg types.AgentMessage) error {
 	if err != nil {
 
 		// Ignore if game wasn't running, typically when hotreloading an agent
-		if server.gameIsRunning == false {
+		if atomic.LoadInt32(&server.gameIsRunning) == 0 {
 			return nil
 		}
 
