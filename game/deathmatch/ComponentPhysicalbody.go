@@ -54,6 +54,11 @@ func (p *PhysicalBody) SetPosition(v vector.Vector2) *PhysicalBody {
 	return p
 }
 
+func (p *PhysicalBody) SetPositionInPhysicalScale(v vector.Vector2) *PhysicalBody {
+	p.body.SetTransform(v.ToB2Vec2(), p.GetOrientation())
+	return p
+}
+
 func (p PhysicalBody) GetPhysicalReferentialVelocity() vector.Vector2 {
 	v := p.body.GetLinearVelocity()
 	return vector.MakeVector2(v.X, v.Y)

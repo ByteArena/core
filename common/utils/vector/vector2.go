@@ -229,8 +229,16 @@ func (a Vector2) IsNull() bool {
 	return isZero(a[0]) && isZero(a[1])
 }
 
+func (a Vector2) IsNullWithPrecision(precision float64) bool {
+	return isZeroWithPrecision(a[0], precision) && isZeroWithPrecision(a[1], precision)
+}
+
 func (a Vector2) Equals(b Vector2) bool {
 	return b.Sub(a).IsNull()
+}
+
+func (a Vector2) EqualsWithPrecision(b Vector2, precision float64) bool {
+	return b.Sub(a).IsNullWithPrecision(precision)
 }
 
 func (a Vector2) String() string {
@@ -253,6 +261,10 @@ var epsilon float64 = 0.000001
 
 func isZero(f float64) bool {
 	return math.Abs(f) < epsilon
+}
+
+func isZeroWithPrecision(f float64, precision float64) bool {
+	return math.Abs(f) < precision
 }
 
 func (v Vector2) Transform(mat *mgl64.Mat4) Vector2 {

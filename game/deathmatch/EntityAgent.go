@@ -15,7 +15,7 @@ import (
 
 func (deathmatch *DeathmatchGame) NewEntityAgent(
 	agent *types.Agent,
-	spawnPosition vector.Vector2,
+	spawnPosition vector.Vector2, // spawnPosition in physical space; TODO: fix this, should be in agent space
 ) ecs.EntityID {
 	agentEntity := deathmatch.manager.NewEntity()
 
@@ -165,7 +165,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(
 				lifecycleAspect := qr.Components[deathmatch.lifecycleComponent].(*Lifecycle)
 				healthAspect := qr.Components[deathmatch.healthComponent].(*Health)
 
-				physicalAspect.SetPosition(vector.MakeVector2(spawnPoint.GetX(), spawnPoint.GetY()))
+				physicalAspect.SetPositionInPhysicalScale(vector.MakeVector2(spawnPoint.GetX(), spawnPoint.GetY()))
 				lifecycleAspect.locked = false
 				healthAspect.Restore()
 
