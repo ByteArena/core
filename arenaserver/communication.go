@@ -115,8 +115,7 @@ func (server *Server) removeAgentConn(conn net.Conn) {
 /* <implementing types.AgentCommunicatorInterface> */
 func (s *Server) NetSend(message []byte, conn net.Conn) error {
 	if conn == nil {
-		// FIXME(sven): ideally fix this
-		log.Println("incorrect state, conn to agent is null")
+		// During hot reload it appends that the connection is nil here, skip
 		return nil
 	}
 

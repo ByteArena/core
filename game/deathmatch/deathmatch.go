@@ -362,9 +362,17 @@ func (deathmatch *DeathmatchGame) Step(ticknum int, dt float64, mutations []type
 
 func (deathmatch *DeathmatchGame) GetAgentPerception(entityid ecs.EntityID) []byte {
 	entityResult := deathmatch.getEntity(entityid, deathmatch.perceptionComponent)
-	perceptionAspect := entityResult.Components[deathmatch.perceptionComponent].(*Perception)
-	bytes, _ := perceptionAspect.GetPerception().MarshalJSON()
-	return bytes
+
+	if entityResult == nil {
+		return []byte{}
+	}
+
+	if perceptionAspect, ok := entityResult.Components[deathmatch.perceptionComponent].(*Perception); ok {
+		bytes, _ := perceptionAspect.GetPerception().MarshalJSON()
+		return bytes
+	}
+
+	return []byte{}
 }
 
 func (deathmatch *DeathmatchGame) GetAgentWelcome(entityid ecs.EntityID) []byte {
