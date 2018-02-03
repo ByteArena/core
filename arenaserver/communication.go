@@ -194,7 +194,7 @@ func (server *Server) DispatchAgentMessage(msg types.AgentMessage) error {
 			ag = ag.SetConn(msg.GetEmitterConn())
 			server.setAgentProxy(ag)
 
-			server.events <- EventDebug{"Received handshake from agent " + ag.String() + ""}
+			server.events <- EventDebug{"Received handshake from agent " + ag.String()}
 
 			server.nbhandshaked++
 

@@ -65,13 +65,6 @@ func readBytesChan(conn net.Conn, deadline time.Time) (chan []byte, chan error) 
 	dataChan := make(chan []byte)
 	errChan := make(chan error)
 
-	deadLineerr := conn.SetReadDeadline(deadline)
-
-	if deadLineerr != nil {
-		errChan <- deadLineerr
-		return dataChan, errChan
-	}
-
 	scanner := bufio.NewScanner(conn)
 
 	go func() {
