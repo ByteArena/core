@@ -27,12 +27,12 @@ type Collidable struct {
 	collisionScriptFunc collisionScriptFunc
 }
 
-func NewCollidable(collisiongroup utils.Tag, collideswith utils.Tag) *Collidable {
-	return &Collidable{
-		collisiongroup: collisiongroup,
-		collideswith:   collideswith,
-	}
-}
+// func NewCollidable(collisiongroup utils.Tag, collideswith utils.Tag) *Collidable {
+// 	return &Collidable{
+// 		collisiongroup: collisiongroup,
+// 		collideswith:   collideswith,
+// 	}
+// }
 
 func (collidable *Collidable) SetCollisionScriptFunc(f collisionScriptFunc) *Collidable {
 	collidable.collisionScriptFunc = f

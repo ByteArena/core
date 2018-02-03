@@ -48,6 +48,7 @@ type DeathmatchGame struct {
 	lifecycleComponent    *ecs.Component
 	respawnComponent      *ecs.Component
 	mailboxComponent      *ecs.Component
+	sensorComponent       *ecs.Component
 
 	agentsView      *ecs.View
 	renderableView  *ecs.View
@@ -66,6 +67,8 @@ type DeathmatchGame struct {
 	collisionListener *collisionListener
 
 	vizframe []byte
+
+	variant string
 }
 
 func NewDeathmatchGame(gameDescription commontypes.GameDescriptionInterface) *DeathmatchGame {
@@ -77,6 +80,9 @@ func NewDeathmatchGame(gameDescription commontypes.GameDescriptionInterface) *De
 	game := &DeathmatchGame{
 		gameDescription: gameDescription,
 		manager:         manager,
+
+		// Variant: empty, or maze
+		variant: gameDescription.GetMapContainer().Meta.Variant,
 
 		bus: ebus.New(),
 
@@ -97,6 +103,7 @@ func NewDeathmatchGame(gameDescription commontypes.GameDescriptionInterface) *De
 		lifecycleComponent:    manager.NewComponent(),
 		respawnComponent:      manager.NewComponent(),
 		mailboxComponent:      manager.NewComponent(),
+		sensorComponent:       manager.NewComponent(),
 	}
 
 	game.setPhysicalToAgentSpaceTransform(

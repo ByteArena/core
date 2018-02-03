@@ -111,15 +111,16 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 		AddComponent(deathmatch.steeringComponent, NewSteering(
 			maxSteering, // MaxSteering
 		)).
-		AddComponent(deathmatch.collidableComponent, NewCollidable(
-			CollisionGroup.Agent,
-			utils.BuildTag(
+		AddComponent(deathmatch.collidableComponent, &Collidable{
+			collisiongroup: CollisionGroup.Agent,
+			collideswith: utils.BuildTag(
 				CollisionGroup.Agent,
 				CollisionGroup.Obstacle,
 				CollisionGroup.Projectile,
 				CollisionGroup.Ground,
 			),
-		).SetCollisionScriptFunc(agentCollisionScript)).
+			collisionScriptFunc: agentCollisionScript,
+		}).
 		AddComponent(deathmatch.lifecycleComponent, &Lifecycle{
 			onDeath: func() {
 

@@ -13,11 +13,13 @@ var PhysicalBodyDescriptorType = struct {
 	Agent      string
 	Ground     string
 	Projectile string
+	Sensor     string
 }{
 	Obstacle:   "o",
 	Agent:      "a",
 	Ground:     "g",
 	Projectile: "p",
+	Sensor:     "s",
 }
 
 func MakePhysicalBodyDescriptor(type_ string, id ecs.EntityID) PhysicalBodyDescriptor {
