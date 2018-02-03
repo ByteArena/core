@@ -12,11 +12,13 @@ var CollisionGroup = struct {
 	Obstacle   utils.Tag
 	Agent      utils.Tag
 	Projectile utils.Tag
+	Sensor     utils.Tag
 }{
 	Ground:     utils.MakeTag(0),
 	Obstacle:   utils.MakeTag(1),
 	Agent:      utils.MakeTag(2),
 	Projectile: utils.MakeTag(3),
+	Sensor:     utils.MakeTag(4),
 }
 
 type collisionScriptFunc func(game *DeathmatchGame, entityID ecs.EntityID, otherEntityID ecs.EntityID, collidableAspect *Collidable, otherCollidableAspectB *Collidable, point vector.Vector2)
@@ -25,14 +27,8 @@ type Collidable struct {
 	collisiongroup      utils.Tag
 	collideswith        utils.Tag
 	collisionScriptFunc collisionScriptFunc
+	isSensor            bool
 }
-
-// func NewCollidable(collisiongroup utils.Tag, collideswith utils.Tag) *Collidable {
-// 	return &Collidable{
-// 		collisiongroup: collisiongroup,
-// 		collideswith:   collideswith,
-// 	}
-// }
 
 func (collidable *Collidable) SetCollisionScriptFunc(f collisionScriptFunc) *Collidable {
 	collidable.collisionScriptFunc = f

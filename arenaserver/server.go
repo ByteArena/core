@@ -143,6 +143,11 @@ func NewServer(
 		isDebug: isDebug,
 	}
 
+	game.Initialize(func() {
+		// cbkGameOver
+		s.Stop()
+	})
+
 	return s
 }
 

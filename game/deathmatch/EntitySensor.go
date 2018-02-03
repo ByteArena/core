@@ -9,9 +9,15 @@ import (
 	commontypes "github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/types/mapcontainer"
 	"github.com/bytearena/core/common/utils"
+	"github.com/bytearena/core/common/utils/vector"
 )
 
-func (deathmatch *DeathmatchGame) NewEntitySensor(polygon mapcontainer.MapPolygon, name string) *ecs.Entity {
+func (deathmatch *DeathmatchGame) NewEntitySensor(
+	polygon mapcontainer.MapPolygon,
+	name string,
+	onSensorActivated func(entityid ecs.EntityID, sensorid ecs.EntityID),
+	collidesWith utils.Tag,
+) *ecs.Entity {
 
 	sensor := deathmatch.manager.NewEntity()
 
@@ -36,7 +42,8 @@ func (deathmatch *DeathmatchGame) NewEntitySensor(polygon mapcontainer.MapPolygo
 	for cur := 0; cur < len(vertices); cur++ {
 		shape := box2d.MakeB2EdgeShape()
 		shape.Set(vertices[prev], vertices[cur])
-		body.CreateFixture(&shape, 0.0)
+		fixture := body.CreateFixture(&shape, 0.0)
+		fixture.SetSensor(true)
 
 		prev = cur
 	}
@@ -52,14 +59,18 @@ func (deathmatch *DeathmatchGame) NewEntitySensor(polygon mapcontainer.MapPolygo
 			static: true,
 		}).
 		AddComponent(deathmatch.collidableComponent, &Collidable{
-			collisiongroup: CollisionGroup.Ground,
-			collideswith: utils.BuildTag(
-				CollisionGroup.Agent,
-			),
-		}) //.
-	// AddComponent(deathmatch.sensorComponent, &Sensor{
-	// 	onSensed: func() {
-	// 		log.Println("SENSED!!!")
-	// 	},
-	// })
+			collisiongroup: CollisionGroup.Sensor,
+			collideswith:   collidesWith,
+			isSensor:       true,
+			collisionScriptFunc: func(
+				game *DeathmatchGame,
+				entityID ecs.EntityID,
+				otherEntityID ecs.EntityID,
+				collidableAspect *Collidable,
+				otherCollidableAspectB *Collidable,
+				point vector.Vector2,
+			) {
+				onSensorActivated(otherEntityID, entityID)
+			},
+		})
 }

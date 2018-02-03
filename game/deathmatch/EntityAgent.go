@@ -38,7 +38,6 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 	///////////////////////////////////////////////////////////////////////////
 
 	bodydef := box2d.MakeB2BodyDef()
-	bodydef.Position.Set(spawnPosition.GetX(), spawnPosition.GetY())
 	bodydef.Type = box2d.B2BodyType.B2_dynamicBody
 	bodydef.AllowSleep = false
 	bodydef.FixedRotation = true
@@ -65,7 +64,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 	tps := deathmatch.gameDescription.GetTps()
 
 	return agentEntity.
-		AddComponent(deathmatch.physicalBodyComponent, &PhysicalBody{
+		AddComponent(deathmatch.physicalBodyComponent, (&PhysicalBody{
 			body:               body,
 			maxSpeed:           maxSpeed,
 			maxAngularVelocity: maxAngularVelocity,
@@ -79,7 +78,9 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 
 			timeScaleIn:  float64(tps),       // m/tick to m/s; => ticksPerSecond
 			timeScaleOut: 1.0 / float64(tps), // m/s to m/tick; => 1 / ticksPerSecond
-		}).
+		}).SetPositionInPhysicalScale(
+			vector.MakeVector2(spawnPosition.GetX(), -1*spawnPosition.GetY()), // TODO(jerome): invert axes in transform, not here
+		)).
 		AddComponent(deathmatch.perceptionComponent, &Perception{
 			visionAngle:  visionAngle,
 			visionRadius: visionRadius,
@@ -165,7 +166,9 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 				lifecycleAspect := qr.Components[deathmatch.lifecycleComponent].(*Lifecycle)
 				healthAspect := qr.Components[deathmatch.healthComponent].(*Health)
 
-				physicalAspect.SetPositionInPhysicalScale(vector.MakeVector2(spawnPoint.GetX(), spawnPoint.GetY()))
+				physicalAspect.SetPositionInPhysicalScale(
+					vector.MakeVector2(spawnPoint.GetX(), spawnPoint.GetY()),
+				)
 				lifecycleAspect.locked = false
 				healthAspect.Restore()
 
