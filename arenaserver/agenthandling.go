@@ -16,14 +16,14 @@ import (
 	bettererrors "github.com/xtuc/better-errors"
 )
 
-func (s *Server) RegisterAgent(agent *types.Agent, spawningVector *vector.Vector2) {
+func (s *Server) RegisterAgent(agent *types.Agent, spawningPoint *vector.Vector2) {
 	agentimage := agent.Manifest.Id
 
 	///////////////////////////////////////////////////////////////////////////
 	// Building the agent entity (gameplay related aspects of the agent)
 	///////////////////////////////////////////////////////////////////////////
 
-	if spawningVector == nil {
+	if spawningPoint == nil {
 
 		arenamap := s.GetGameDescription().GetMapContainer()
 		agentSpawnPointIndex := len(s.agentproxies)
@@ -42,10 +42,10 @@ func (s *Server) RegisterAgent(agent *types.Agent, spawningVector *vector.Vector
 		agentSpawningPos := arenamap.Data.Starts[agentSpawnPointIndex]
 
 		vector := vector.MakeVector2(agentSpawningPos.Point.GetX(), agentSpawningPos.Point.GetY())
-		spawningVector = &vector
+		spawningPoint = &vector
 	}
 
-	agententityid := s.game.NewEntityAgent(agent, *spawningVector)
+	agententityid := s.game.NewEntityAgent(agent, *spawningPoint)
 
 	///////////////////////////////////////////////////////////////////////////
 	// Building the agent proxy (concrete link with container and communication pipe)
@@ -61,7 +61,7 @@ func (s *Server) RegisterAgent(agent *types.Agent, spawningVector *vector.Vector
 	agent.UUID = agentproxy.GetProxyUUID()
 
 	// Keep last spawning point in case we will respawn it (via ReloadAgent)
-	s.agentspawnedvector[agentproxy.GetProxyUUID()] = spawningVector
+	s.agentspawnedvector[agentproxy.GetProxyUUID()] = spawningPoint
 }
 
 func (s *Server) ReloadAgent(agent *types.Agent) error {
