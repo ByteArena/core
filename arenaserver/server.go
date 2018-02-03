@@ -20,11 +20,11 @@ import (
 	"github.com/bytearena/core/common/types"
 	"github.com/bytearena/core/common/types/mapcontainer"
 	"github.com/bytearena/core/common/utils"
+	"github.com/bytearena/core/common/utils/vector"
 	commongame "github.com/bytearena/core/game/common"
 )
 
 const (
-	POURCENT_LEFT_BEFORE_QUIT    = 50 // %
 	CLOSE_CONNECTION_BEFORE_KILL = 1 * time.Second
 	LOG_ENTRY_BUFFER             = 100
 )
@@ -53,6 +53,8 @@ type Server struct {
 	agentproxiesmutex      *sync.Mutex
 	agentproxieshandshakes map[uuid.UUID]struct{}
 	agentimages            map[uuid.UUID]string
+	agentcontainers        map[uuid.UUID]*types.AgentContainer
+	agentspawnedvector     map[uuid.UUID]*vector.Vector2
 
 	pendingmutations []types.AgentMutationBatch
 	mutationsmutex   *sync.Mutex
@@ -64,7 +66,7 @@ type Server struct {
 	///////////////////////////////////////////////////////////////////////
 
 	game          commongame.GameInterface
-	gameIsRunning bool
+	gameIsRunning int32
 	gameDuration  *time.Duration
 	gameStartTime *time.Time
 	gameOver      bool
@@ -72,6 +74,8 @@ type Server struct {
 	isDebug bool
 
 	events chan interface{}
+
+	gameStepMutex *sync.Mutex
 }
 
 func NewServer(
@@ -111,6 +115,8 @@ func NewServer(
 		tearDownCallbacks:      make([]types.TearDownCallback, 0),
 		tearDownCallbacksMutex: &sync.Mutex{},
 
+		gameStepMutex: &sync.Mutex{},
+
 		containerorchestrator: orch,
 		commserver:            nil, // initialized in Listen()
 		mqClient:              mqClient,
@@ -122,6 +128,8 @@ func NewServer(
 		agentproxiesmutex:      &sync.Mutex{},
 		agentproxieshandshakes: make(map[uuid.UUID]struct{}),
 		agentimages:            make(map[uuid.UUID]string),
+		agentcontainers:        make(map[uuid.UUID]*types.AgentContainer),
+		agentspawnedvector:     make(map[uuid.UUID]*vector.Vector2),
 
 		pendingmutations: make([]types.AgentMutationBatch, 0),
 		mutationsmutex:   &sync.Mutex{},
@@ -133,7 +141,6 @@ func NewServer(
 		///////////////////////////////////////////////////////////////////////
 
 		game:          game,
-		gameIsRunning: false,
 		gameDuration:  gameDuration,
 		gameStartTime: nil,
 		gameOver:      false,
@@ -183,7 +190,7 @@ func (server *Server) Start() (chan interface{}, error) {
 }
 
 func (server *Server) Stop() {
-	server.gameIsRunning = false
+	atomic.StoreInt32(&server.gameIsRunning, 0)
 
 	server.Log(EventDebug{"TearDown from stop"})
 	server.TearDown()
@@ -232,7 +239,7 @@ func (server *Server) onAgentsReady() {
 
 func (server *Server) startTicking() {
 
-	server.gameIsRunning = true
+	atomic.StoreInt32(&server.gameIsRunning, 1)
 	now := time.Now()
 	server.gameStartTime = &now
 
@@ -291,6 +298,8 @@ func (server *Server) doTick() {
 	//watch := utils.MakeStopwatch("doTick")
 	//watch.Start("global")
 
+	server.gameStepMutex.Lock()
+
 	begin := time.Now()
 
 	turn := int(server.currentturn) // starts at 0
@@ -314,12 +323,13 @@ func (server *Server) doTick() {
 	for _, agentproxy := range server.agentproxies {
 		go func(server *Server, agentproxy agent.AgentProxyInterface, arenamap *mapcontainer.MapContainer) {
 
-			err := agentproxy.SetPerception(
-				server.GetGame().GetAgentPerception(agentproxy.GetEntityId()),
-				server,
-			)
+			agentPerception := server.
+				GetGame().
+				GetAgentPerception(agentproxy.GetEntityId())
 
-			if err != nil && server.gameIsRunning {
+			err := agentproxy.SetPerception(agentPerception, server)
+
+			if err != nil && atomic.LoadInt32(&server.gameIsRunning) == 1 {
 				berror := bettererrors.
 					New("Failed to send perception").
 					SetContext("agent", agentproxy.GetProxyUUID().String()).
@@ -330,6 +340,8 @@ func (server *Server) doTick() {
 
 		}(server, agentproxy, arenamap)
 	}
+
+	server.gameStepMutex.Unlock()
 
 	///////////////////////////////////////////////////////////////////////////
 	// Pushing updated state to viz

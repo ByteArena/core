@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync/atomic"
 
 	notify "github.com/bitly/go-notify"
 	"github.com/bytearena/core/arenaserver/agent"
@@ -54,9 +55,8 @@ func (server *Server) listen() chan interface{} {
 				// An agent has probaly been disconnected
 				// We need to remove it from our state
 				case comm.EventConnDisconnected:
-					server.clearAgentConn(t.Conn)
+					server.removeAgentConn(t.Conn)
 					server.Log(EventWarn{t.Err})
-					server.ensureEnoughAgentsAreInGame()
 
 				default:
 					msg := fmt.Sprintf("Unsupported message of type %s", reflect.TypeOf(msg))
@@ -77,54 +77,47 @@ func (server *Server) listen() chan interface{} {
 	return block
 }
 
-func (server *Server) ensureEnoughAgentsAreInGame() {
-	if server.nbhandshaked == 0 {
-		server.Log(EventDebug{"Stopping because not enough agents are left"})
-		server.Stop()
-		return
-	}
+func (server *Server) removeAgent(key uuid.UUID) {
 
-	left := server.nbhandshaked - len(server.agentproxies)
-	pourcentLeft := left * 100 / server.nbhandshaked
+	// Remove agent from our state
+	delete(server.agentproxies, key)
+	delete(server.agentimages, key)
+	delete(server.agentproxieshandshakes, key)
 
-	if pourcentLeft > POURCENT_LEFT_BEFORE_QUIT {
-		server.Log(EventDebug{"Stopping because not enough agents are left"})
-		server.Stop()
-	}
+	server.Log(EventDebug{fmt.Sprintf("Removing %s from state", key.String())})
 }
 
-func (server *Server) clearAgentConn(conn net.Conn) {
-	server.agentproxiesmutex.Lock()
+func (server *Server) removeAgentConn(conn net.Conn) {
+
+	var pkey *uuid.UUID
 
 	for k, agentproxy := range server.agentproxies {
 		netAgent, ok := agentproxy.(agent.AgentProxyNetworkInterface)
 
 		if ok && netAgent.GetConn() == conn {
-
-			server.clearAgentById(k)
+			pkey = &k
 			break
 		}
 
 	}
 
-	server.agentproxiesmutex.Unlock()
-}
+	if pkey != nil {
+		key := *pkey
 
-func (server *Server) clearAgentById(k uuid.UUID) {
-	server.agentproxiesmutex.Lock()
+		server.agentproxiesmutex.Lock()
+		server.removeAgent(key)
+		server.agentproxiesmutex.Unlock()
+	}
 
-	// Remove agent from our state
-	delete(server.agentproxies, k)
-	delete(server.agentimages, k)
-	delete(server.agentproxieshandshakes, k)
-
-	server.Log(EventDebug{fmt.Sprintf("Removing %s from state", k.String())})
-
-	server.agentproxiesmutex.Unlock()
 }
 
 /* <implementing types.AgentCommunicatorInterface> */
 func (s *Server) NetSend(message []byte, conn net.Conn) error {
+	if conn == nil {
+		// During hot reload it appends that the connection is nil here, skip
+		return nil
+	}
+
 	return s.commserver.Send(message, conn)
 }
 
@@ -141,8 +134,17 @@ func (server *Server) ImplementsCommDispatcherInterface() {}
 func (server *Server) DispatchAgentMessage(msg types.AgentMessage) error {
 
 	agentproxy, err := server.getAgentProxy(msg.GetAgentId().String())
+
 	if err != nil {
-		return errors.New("DispatchAgentMessage: agentid does not match any known agent in received agent message !;" + msg.GetAgentId().String())
+
+		// Ignore if game wasn't running, typically when hotreloading an agent
+		if atomic.LoadInt32(&server.gameIsRunning) == 0 {
+			return nil
+		}
+
+		return bettererrors.
+			New("DispatchAgentMessage: agentid does not match any known agent in received agent message").
+			SetContext("agentid", msg.GetAgentId().String())
 	}
 
 	// proto := msg.GetEmitterConn().LocalAddr().Network()
@@ -192,7 +194,7 @@ func (server *Server) DispatchAgentMessage(msg types.AgentMessage) error {
 			ag = ag.SetConn(msg.GetEmitterConn())
 			server.setAgentProxy(ag)
 
-			server.events <- EventDebug{"Received handshake from agent " + ag.String() + ""}
+			server.events <- EventDebug{"Received handshake from agent " + ag.String()}
 
 			server.nbhandshaked++
 

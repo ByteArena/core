@@ -41,3 +41,10 @@ type mailboxMessagePerceptionWrapper struct {
 	Subject string      `json:"subject"`
 	Body    interface{} `json:"body"`
 }
+
+func newEmptyAgentPerception() *agentPerception {
+	return &agentPerception{
+		Vision:   make([]agentPerceptionVisionItem, 0),
+		Messages: make([]mailboxMessagePerceptionWrapper, 0),
+	}
+}

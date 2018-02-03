@@ -13,8 +13,10 @@ import (
 	"github.com/bytearena/core/game/deathmatch/events"
 )
 
-func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPosition vector.Vector2) *ecs.Entity { // spawnPosition in physical space; TODO: fix this, should be in agent space
-
+func (deathmatch *DeathmatchGame) NewEntityAgent(
+	agent *types.Agent,
+	spawnPosition vector.Vector2, // spawnPosition in physical space; TODO: fix this, should be in agent space
+) ecs.EntityID {
 	agentEntity := deathmatch.manager.NewEntity()
 
 	///////////////////////////////////////////////////////////////////////////
@@ -61,10 +63,9 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 	///////////////////////////////////////////////////////////////////////////
 	// Composition de l'agent dans l'ECS
 	///////////////////////////////////////////////////////////////////////////
-
 	tps := deathmatch.gameDescription.GetTps()
 
-	return agentEntity.
+	agentEntity.
 		AddComponent(deathmatch.physicalBodyComponent, &PhysicalBody{
 			body:               body,
 			maxSpeed:           maxSpeed,
@@ -83,6 +84,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 		AddComponent(deathmatch.perceptionComponent, &Perception{
 			visionAngle:  visionAngle,
 			visionRadius: visionRadius,
+			perception:   newEmptyAgentPerception(),
 		}).
 		AddComponent(deathmatch.healthComponent, &Health{
 			maxLife: 1000, // Const
@@ -175,6 +177,14 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(agent *types.Agent, spawnPositi
 			},
 		}).
 		AddComponent(deathmatch.mailboxComponent, &Mailbox{})
+
+	return agentEntity.GetID()
+}
+
+func (deathmatch *DeathmatchGame) RemoveEntityAgent(agent *types.Agent) {
+
+	qr := deathmatch.getEntity(agent.EntityID)
+	deathmatch.manager.DisposeEntity(qr)
 }
 
 func agentCollisionScript(game *DeathmatchGame, entityID ecs.EntityID, otherEntityID ecs.EntityID, collidableAspect *Collidable, otherCollidableAspectB *Collidable, point vector.Vector2) {
