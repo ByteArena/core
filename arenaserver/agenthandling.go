@@ -106,10 +106,10 @@ func (s *Server) ReloadAgent(agent *types.Agent) error {
 	}
 
 	// Re-register it
-	lastSpawnedVector, _ := s.agentspawnedvector[agent.UUID]
+	lastSpawnedPoint, _ := s.agentspawnedvector[agent.UUID]
 
 	s.gameStepMutex.Lock()
-	s.RegisterAgent(agent, lastSpawnedVector)
+	s.RegisterAgent(agent, lastSpawnedPoint)
 	s.gameStepMutex.Unlock()
 
 	// Re-start it
