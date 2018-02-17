@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"time"
 
@@ -17,6 +18,11 @@ import (
 const (
 	CONNECTION_TO_MESSAGE_DEADLINE = 3 * time.Second
 	LOG_ENTRY_BUFFER               = 100
+	READ_INACTIVITY_DURATION       = 5 * time.Second
+)
+
+var (
+	EOF = io.EOF
 )
 
 type CommDispatcherInterface interface {
@@ -55,7 +61,7 @@ func (s *CommServer) Send(message []byte, conn net.Conn) error {
 	return nil
 }
 
-func readBytesChan(conn net.Conn) (chan []byte, chan error) {
+func readBytesChan(conn net.Conn, deadline time.Time) (chan []byte, chan error) {
 	dataChan := make(chan []byte)
 	errChan := make(chan error)
 
@@ -69,6 +75,9 @@ func readBytesChan(conn net.Conn) (chan []byte, chan error) {
 
 		if err := scanner.Err(); err != nil {
 			errChan <- err
+		} else {
+			// EOF
+			errChan <- EOF
 		}
 	}()
 
@@ -95,11 +104,10 @@ func (s *CommServer) Listen(dispatcher CommDispatcherInterface) error {
 			}
 
 			go func() {
-				dataChan, errorChan := readBytesChan(conn)
+				dataChan, errorChan := readBytesChan(conn, time.Now().Add(READ_INACTIVITY_DURATION))
 				gotData := false
 
 				for {
-
 					select {
 					case <-time.After(CONNECTION_TO_MESSAGE_DEADLINE):
 						if !gotData {
@@ -165,6 +173,12 @@ func (s *CommServer) Listen(dispatcher CommDispatcherInterface) error {
 							// Cancel deadline
 							gotData = true
 
+							conn.Close()
+
+							if err == EOF {
+								return
+							}
+
 							berror := bettererrors.
 								New("Connexion closed unexpectedly").
 								With(bettererrors.NewFromErr(err))
@@ -175,7 +189,6 @@ func (s *CommServer) Listen(dispatcher CommDispatcherInterface) error {
 								Conn: conn,
 							})
 
-							conn.Close()
 							return
 						}
 					}
