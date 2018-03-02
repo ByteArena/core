@@ -65,7 +65,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(
 	tps := deathmatch.gameDescription.GetTps()
 
 	agentEntity.
-		AddComponent(deathmatch.physicalBodyComponent, &PhysicalBody{
+		AddComponent(deathmatch.physicalBodyComponent, (&PhysicalBody{
 			body:               body,
 			maxSpeed:           maxSpeed,
 			maxAngularVelocity: maxAngularVelocity,

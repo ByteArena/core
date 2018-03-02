@@ -6,10 +6,6 @@ import (
 	"github.com/bytearena/core/game/deathmatch/mailboxmessages"
 )
 
-const (
-	SEND_STATS_MAIL_EVERY = 10 /* ticks */
-)
-
 func systemPlayerStats(deathmatch *DeathmatchGame) {
 	for _, result := range deathmatch.playerStatsView.Get() {
 		playerAspect := result.Components[deathmatch.playerComponent].(*Player)
@@ -17,11 +13,9 @@ func systemPlayerStats(deathmatch *DeathmatchGame) {
 
 		playerAspect.Stats.distanceTravelled += math.Abs(physicalAspect.GetVelocity().Mag())
 
-		if deathmatch.ticknum%SEND_STATS_MAIL_EVERY == 0 {
-			mailboxAspect := result.Components[deathmatch.mailboxComponent].(*Mailbox)
+		mailboxAspect := result.Components[deathmatch.mailboxComponent].(*Mailbox)
 
-			sendStatsToAgent(mailboxAspect, playerAspect)
-		}
+		sendStatsToAgent(mailboxAspect, playerAspect)
 	}
 }
 
