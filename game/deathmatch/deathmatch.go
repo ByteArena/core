@@ -2,6 +2,7 @@ package deathmatch
 
 import (
 	"encoding/json"
+	"log"
 	"strconv"
 
 	ebus "github.com/asaskevich/EventBus"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/bytearena/core/common/types"
 	commontypes "github.com/bytearena/core/common/types"
+	"github.com/bytearena/core/common/utils"
 	"github.com/bytearena/core/game/deathmatch/events"
 	"github.com/bytearena/core/game/deathmatch/mailboxmessages"
 )
@@ -48,6 +50,7 @@ type DeathmatchGame struct {
 	lifecycleComponent    *ecs.Component
 	respawnComponent      *ecs.Component
 	mailboxComponent      *ecs.Component
+	sensorComponent       *ecs.Component
 
 	agentsView      *ecs.View
 	renderableView  *ecs.View
@@ -66,6 +69,9 @@ type DeathmatchGame struct {
 	collisionListener *collisionListener
 
 	vizframe []byte
+
+	variant     string
+	cbkGameOver func()
 }
 
 func NewDeathmatchGame(gameDescription commontypes.GameDescriptionInterface) *DeathmatchGame {
@@ -77,6 +83,9 @@ func NewDeathmatchGame(gameDescription commontypes.GameDescriptionInterface) *De
 	game := &DeathmatchGame{
 		gameDescription: gameDescription,
 		manager:         manager,
+
+		// Variant: empty, or maze
+		variant: gameDescription.GetMapContainer().Meta.Variant,
 
 		bus: ebus.New(),
 
@@ -97,6 +106,7 @@ func NewDeathmatchGame(gameDescription commontypes.GameDescriptionInterface) *De
 		lifecycleComponent:    manager.NewComponent(),
 		respawnComponent:      manager.NewComponent(),
 		mailboxComponent:      manager.NewComponent(),
+		sensorComponent:       manager.NewComponent(),
 	}
 
 	game.setPhysicalToAgentSpaceTransform(
@@ -193,7 +203,15 @@ func NewDeathmatchGame(gameDescription commontypes.GameDescriptionInterface) *De
 	game.BusSubscribe(events.EntityRespawning{}, game.onEntityRespawning)
 	game.BusSubscribe(events.EntityRespawned{}, game.onEntityRespawned)
 
+	if game.variant == "maze" {
+		game.BusSubscribe(events.EntityExitedMaze{}, game.onEntityExitedMaze)
+	}
+
 	return game
+}
+
+func (deathmatch *DeathmatchGame) Initialize(cbkGameOver func()) {
+	deathmatch.cbkGameOver = cbkGameOver
 }
 
 func (deathmatch *DeathmatchGame) setPhysicalToAgentSpaceTransform(scale float64, translation, rotation [3]float64) *DeathmatchGame {
@@ -247,7 +265,7 @@ func (deathmatch *DeathmatchGame) Step(ticknum int, dt float64, mutations []type
 	// On fait mourir les non respawners début du tour (donc après le tour
 	// précédent et la construction du message de visualisation du tour précédent).
 	// Cela permet de conserver la vision des projectiles à l'endroit de leur disparition pendant 1 tick
-	// Pour une meilleur précision de la position de collision dans la visualisation
+	// Pour une meilleure précision de la position de collision dans la visualisation
 	///////////////////////////////////////////////////////////////////////////
 
 	//watch.Start("systemDeath")
@@ -547,6 +565,11 @@ func (deathmatch *DeathmatchGame) ComputeVizFrame(mailboxes map[ecs.EntityID]([]
 				payload = map[string]string{
 					"who": strconv.Itoa(int(entityid)),
 				}
+			case mailboxmessages.YouHaveExitedTheMaze:
+				subject = v.Subject()
+				payload = map[string]string{
+					"who": strconv.Itoa(int(entityid)),
+				}
 			}
 
 			if subject != "" {
@@ -574,6 +597,31 @@ func initPhysicalWorld(deathmatch *DeathmatchGame) {
 	for _, obstacle := range arenaMap.Data.Obstacles {
 		polygon := obstacle.Polygon
 		deathmatch.NewEntityObstacle(polygon, obstacle.Name)
+	}
+
+	if deathmatch.variant == "maze" {
+		// Sensors
+
+		for _, otherObject := range arenaMap.Data.OtherPolygonObjects {
+
+			if utils.IsStringInArray(otherObject.Tags, "maze:exit") {
+				polygon := otherObject.Polygon
+				deathmatch.NewEntitySensor(
+					polygon,
+					otherObject.Name,
+					func(entityid ecs.EntityID, sensorid ecs.EntityID) {
+						deathmatch.BusPublish(events.EntityExitedMaze{
+							Entity: entityid,
+							Exit:   sensorid,
+						})
+					},
+					utils.BuildTag(
+						CollisionGroup.Agent,
+						CollisionGroup.Projectile,
+					),
+				)
+			}
+		}
 	}
 }
 
@@ -708,4 +756,20 @@ func (game *DeathmatchGame) onEntityRespawned(e events.EntityRespawned) {
 
 	mailboxAspect := query.Components[game.mailboxComponent].(*Mailbox)
 	mailboxAspect.PushMessage(mailboxmessages.YouHaveRespawned{})
+}
+
+func (game *DeathmatchGame) onEntityExitedMaze(e events.EntityExitedMaze) {
+	query := game.getEntity(e.Entity, game.mailboxComponent)
+	if query == nil {
+		// should never happen
+		return
+	}
+
+	mailboxAspect := query.Components[game.mailboxComponent].(*Mailbox)
+	mailboxAspect.PushMessage(mailboxmessages.YouHaveExitedTheMaze{
+		Entity: e.Entity,
+	})
+
+	log.Println("EXITED THE MAZE")
+	game.cbkGameOver()
 }

@@ -105,14 +105,15 @@ func (deathmatch *DeathmatchGame) NewEntityBallisticProjectile(ownerid ecs.Entit
 		AddComponent(deathmatch.impactorComponent, &Impactor{
 			damage: projectiledamage,
 		}).
-		AddComponent(deathmatch.collidableComponent, NewCollidable(
-			CollisionGroup.Projectile,
-			utils.BuildTag(
+		AddComponent(deathmatch.collidableComponent, &Collidable{
+			collisiongroup: CollisionGroup.Projectile,
+			collideswith: utils.BuildTag(
 				CollisionGroup.Agent,
 				CollisionGroup.Obstacle,
 				CollisionGroup.Projectile,
 			),
-		).SetCollisionScriptFunc(projectileCollisionScript))
+			collisionScriptFunc: projectileCollisionScript,
+		})
 }
 
 func projectileCollisionScript(game *DeathmatchGame, entityID ecs.EntityID, otherEntityID ecs.EntityID, collidableAspect *Collidable, otherCollidableAspectB *Collidable, point vector.Vector2) {

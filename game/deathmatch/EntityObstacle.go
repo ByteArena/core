@@ -13,23 +13,23 @@ import (
 
 func (deathmatch *DeathmatchGame) NewEntityGround(polygon mapcontainer.MapPolygon, name string) *ecs.Entity {
 	return newEntityGroundOrObstacle(deathmatch, polygon, commontypes.PhysicalBodyDescriptorType.Ground, name).
-		AddComponent(deathmatch.collidableComponent, NewCollidable(
-			CollisionGroup.Ground,
-			utils.BuildTag(
+		AddComponent(deathmatch.collidableComponent, &Collidable{
+			collisiongroup: CollisionGroup.Ground,
+			collideswith: utils.BuildTag(
 				CollisionGroup.Agent,
 			),
-		))
+		})
 }
 
 func (deathmatch *DeathmatchGame) NewEntityObstacle(polygon mapcontainer.MapPolygon, name string) *ecs.Entity {
 	return newEntityGroundOrObstacle(deathmatch, polygon, commontypes.PhysicalBodyDescriptorType.Obstacle, name).
-		AddComponent(deathmatch.collidableComponent, NewCollidable(
-			CollisionGroup.Obstacle,
-			utils.BuildTag(
+		AddComponent(deathmatch.collidableComponent, &Collidable{
+			collisiongroup: CollisionGroup.Obstacle,
+			collideswith: utils.BuildTag(
 				CollisionGroup.Agent,
 				CollisionGroup.Projectile,
 			),
-		))
+		})
 }
 
 func newEntityGroundOrObstacle(deathmatch *DeathmatchGame, polygon mapcontainer.MapPolygon, obstacletype string, name string) *ecs.Entity {

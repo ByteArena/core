@@ -40,7 +40,6 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(
 	///////////////////////////////////////////////////////////////////////////
 
 	bodydef := box2d.MakeB2BodyDef()
-	bodydef.Position.Set(spawnPosition.GetX(), spawnPosition.GetY())
 	bodydef.Type = box2d.B2BodyType.B2_dynamicBody
 	bodydef.AllowSleep = false
 	bodydef.FixedRotation = true
@@ -66,7 +65,7 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(
 	tps := deathmatch.gameDescription.GetTps()
 
 	agentEntity.
-		AddComponent(deathmatch.physicalBodyComponent, &PhysicalBody{
+		AddComponent(deathmatch.physicalBodyComponent, (&PhysicalBody{
 			body:               body,
 			maxSpeed:           maxSpeed,
 			maxAngularVelocity: maxAngularVelocity,
@@ -80,7 +79,9 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(
 
 			timeScaleIn:  float64(tps),       // m/tick to m/s; => ticksPerSecond
 			timeScaleOut: 1.0 / float64(tps), // m/s to m/tick; => 1 / ticksPerSecond
-		}).
+		}).SetPositionInPhysicalScale(
+			vector.MakeVector2(spawnPosition.GetX(), -1*spawnPosition.GetY()), // TODO(jerome): invert axes in transform, not here
+		)).
 		AddComponent(deathmatch.perceptionComponent, &Perception{
 			visionAngle:  visionAngle,
 			visionRadius: visionRadius,
@@ -113,15 +114,16 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(
 		AddComponent(deathmatch.steeringComponent, NewSteering(
 			maxSteering, // MaxSteering
 		)).
-		AddComponent(deathmatch.collidableComponent, NewCollidable(
-			CollisionGroup.Agent,
-			utils.BuildTag(
+		AddComponent(deathmatch.collidableComponent, &Collidable{
+			collisiongroup: CollisionGroup.Agent,
+			collideswith: utils.BuildTag(
 				CollisionGroup.Agent,
 				CollisionGroup.Obstacle,
 				CollisionGroup.Projectile,
 				CollisionGroup.Ground,
 			),
-		).SetCollisionScriptFunc(agentCollisionScript)).
+			collisionScriptFunc: agentCollisionScript,
+		}).
 		AddComponent(deathmatch.lifecycleComponent, &Lifecycle{
 			onDeath: func() {
 
@@ -166,7 +168,9 @@ func (deathmatch *DeathmatchGame) NewEntityAgent(
 				lifecycleAspect := qr.Components[deathmatch.lifecycleComponent].(*Lifecycle)
 				healthAspect := qr.Components[deathmatch.healthComponent].(*Health)
 
-				physicalAspect.SetPositionInPhysicalScale(vector.MakeVector2(spawnPoint.GetX(), spawnPoint.GetY()))
+				physicalAspect.SetPositionInPhysicalScale(
+					vector.MakeVector2(spawnPoint.GetX(), spawnPoint.GetY()),
+				)
 				lifecycleAspect.locked = false
 				healthAspect.Restore()
 
