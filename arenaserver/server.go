@@ -18,7 +18,6 @@ import (
 
 	"github.com/bytearena/core/common/mq"
 	"github.com/bytearena/core/common/types"
-	"github.com/bytearena/core/common/types/mapcontainer"
 	"github.com/bytearena/core/common/utils"
 	"github.com/bytearena/core/common/utils/vector"
 	commongame "github.com/bytearena/core/game/common"
@@ -324,9 +323,8 @@ func (server *Server) doTick() {
 	// Refreshing perception for every agent
 	///////////////////////////////////////////////////////////////////////////
 
-	arenamap := server.GetGameDescription().GetMapContainer()
 	for _, agentproxy := range server.agentproxies {
-		go func(server *Server, agentproxy agent.AgentProxyInterface, arenamap *mapcontainer.MapContainer) {
+		go func(server *Server, agentproxy agent.AgentProxyInterface) {
 
 			agentPerception := server.
 				GetGame().
@@ -343,7 +341,7 @@ func (server *Server) doTick() {
 				server.Log(EventError{berror})
 			}
 
-		}(server, agentproxy, arenamap)
+		}(server, agentproxy)
 	}
 
 	server.gameStepMutex.Unlock()
