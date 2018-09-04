@@ -127,11 +127,12 @@ func (game *SoccerGame) GetAgentWelcome(entityid ecs.EntityID) []byte {
 func (game *SoccerGame) GetVizInitJson() []byte {
 	return []byte(
 		`{
+			"type": "init",
 			"field": {
-				"width": 1050,
-				"height": 680,
-				"padding": 60,
-				"goallength": 70
+				"width": 105,
+				"height": 68,
+				"padding": 6,
+				"goallength": 7
 			}
 		}`,
 	)
