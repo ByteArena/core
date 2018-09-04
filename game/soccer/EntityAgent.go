@@ -77,12 +77,19 @@ func (game *SoccerGame) NewEntityAgent(
 			//vector.MakeVector2(spawnPosition.GetX(), -1*spawnPosition.GetY()), // TODO(jerome): invert axes in transform, not here
 			vector.MakeVector2(58.5, -1*39.75), // TODO: SOCCER: this is the center of the field
 		)).
+		AddComponent(game.perceptionComponent, &Perception{
+			perception: newEmptyAgentPerception(),
+		}).
 		AddComponent(game.playerComponent, &Player{
 			Agent: agent,
 		}).
 		AddComponent(game.steeringComponent, NewSteering(
 			maxSteering, // MaxSteering
 		)).
+		AddComponent(game.renderComponent, &Render{
+			type_:  "agent",
+			static: false,
+		}).
 		AddComponent(game.collidableComponent, &Collidable{
 			collisiongroup: CollisionGroup.Agent,
 			collideswith: utils.BuildTag(
