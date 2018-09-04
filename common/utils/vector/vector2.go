@@ -12,6 +12,7 @@ import (
 )
 
 type Vector2 [2]float64
+type Point2 = Vector2
 
 func MakeVector2(x float64, y float64) Vector2 {
 	return Vector2{x, y}
