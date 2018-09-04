@@ -129,10 +129,10 @@ func (game *SoccerGame) GetVizInitJson() []byte {
 		`{
 			"type": "init",
 			"field": {
-				"width": 105,
-				"height": 68,
+				"width": 117,
+				"height": 79.5,
 				"padding": 6,
-				"goallength": 7
+				"goallength": 7.3
 			}
 		}`,
 	)
