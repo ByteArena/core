@@ -75,7 +75,7 @@ func (game *SoccerGame) NewEntityAgent(
 			timeScaleOut: 1.0 / float64(tps), // m/s to m/tick; => 1 / ticksPerSecond
 		}).SetPositionInPhysicalScale(
 			//vector.MakeVector2(spawnPosition.GetX(), -1*spawnPosition.GetY()), // TODO(jerome): invert axes in transform, not here
-			vector.MakeVector2(58.5, -1*39.75), // TODO: SOCCER: this is the center of the field
+			vector.MakeVector2(58.5, 39.75), // TODO: SOCCER: this is the center of the field
 		)).
 		AddComponent(game.perceptionComponent, &Perception{
 			perception: newEmptyAgentPerception(),

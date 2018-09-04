@@ -1,9 +1,5 @@
 package soccer
 
-import (
-	"math"
-)
-
 func systemSteering(game *SoccerGame) {
 	for _, entityresult := range game.steeringView.Get() {
 		steeringAspect := entityresult.Components[game.steeringComponent].(*Steering)
@@ -14,30 +10,32 @@ func systemSteering(game *SoccerGame) {
 			continue
 		}
 
-		steering := steers[0]
+		targetPoint := steers[0]
 
-		velocity := physicalAspect.GetVelocity()
+		steering := targetPoint.Sub(physicalAspect.GetPosition())
+
+		// velocity := physicalAspect.GetVelocity()
 		// orientation := physicalAspect.GetOrientation()
 
-		prevmag := velocity.Mag()
-		diff := steering.Mag() - prevmag
+		// prevmag := velocity.Mag()
+		// diff := steering.Mag() - prevmag
 
-		maxSteeringForce := steeringAspect.GetMaxSteeringForce()
-		// maxAngularVelocity := physicalAspect.GetMaxAngularVelocity()
-		maxSpeed := physicalAspect.GetMaxSpeed()
-		if math.Abs(diff) > maxSteeringForce {
-			if diff > 0 {
-				steering = steering.SetMag(prevmag + maxSteeringForce)
-			} else {
-				steering = steering.SetMag(prevmag - maxSteeringForce)
-			}
-		}
+		// maxSteeringForce := steeringAspect.GetMaxSteeringForce()
+		// // maxAngularVelocity := physicalAspect.GetMaxAngularVelocity()
+		// maxSpeed := physicalAspect.GetMaxSpeed()
+		// if math.Abs(diff) > maxSteeringForce {
+		// 	if diff > 0 {
+		// 		steering = steering.SetMag(prevmag + maxSteeringForce)
+		// 	} else {
+		// 		steering = steering.SetMag(prevmag - maxSteeringForce)
+		// 	}
+		// }
 
 		// abssteering := trigo.Limit(maxSpeed)
 		// LocalAngleToAbsoluteAngleVec(orientation, steering, &maxAngularVelocity).
 
-		limitedSteering := steering.Limit(maxSpeed)
+		// limitedSteering := steering.Limit(maxSpeed)
 
-		physicalAspect.SetVelocity(limitedSteering) // absolute steering received, abs steering provided
+		physicalAspect.SetVelocity(steering) // absolute steering received, abs steering provided
 	}
 }
